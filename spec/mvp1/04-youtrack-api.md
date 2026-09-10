@@ -1,0 +1,72 @@
+# YouTrack REST Adapter
+
+## Client
+
+`Client` owns normalized service URL, permanent token, `http.Client`, and user agent.
+
+Every normal request sends:
+
+```text
+Authorization: Bearer <token>
+Accept: application/json
+User-Agent: youtrack-cli/<version>
+Content-Type: application/json   # JSON mutations
+```
+
+Default timeout is 30 seconds and all requests honor `context.Context`.
+
+## Base URL
+
+Users configure the YouTrack service root, for example:
+
+```text
+https://company.youtrack.cloud
+https://internal.example.com/youtrack
+```
+
+The adapter preserves any context path and appends `/api/...`.
+
+## Read retries
+
+GET only: retry 502/503/504 twice with short backoff. Do not automatically retry POST/DELETE in MVP1.
+
+## Issue resources
+
+```text
+GET  /api/issues/{issue}
+POST /api/issues/{issue}
+POST /api/issues/{issue}/project
+GET/POST /api/issues/{issue}/tags
+DELETE /api/issues/{issue}/tags/{tagID}
+```
+
+Combined `issue edit` serializes summary/description/customFields/final tags into one issue POST.
+
+## Metadata resources
+
+```text
+GET /api/admin/projects/{project}
+GET /api/admin/projects?query=...
+GET /api/admin/projects/{project}/customFields
+GET /api/admin/projects/{project}/customFields/{field}/bundle/values
+GET /api/admin/customFieldSettings/bundles/user/{bundle}/aggregatedUsers
+GET /api/tags?query=...
+GET /api/groups?query=...
+GET /api/users/me
+```
+
+## Fields projections
+
+All field projections are centralized in `internal/youtrack/fields_query.go`. Commands must not build YouTrack `fields=` expressions.
+
+## REST DTOs
+
+Read custom fields retain raw `value` JSON plus `$type`, and state-machine fields also request `possibleEvents(id,presentation)`, then map explicitly into domain values/semantic transitions. Do not build a large polymorphic DTO hierarchy.
+
+Write DTOs are separate. The adapter maps `FieldDefinition.Kind + Cardinality` into the correct issue custom-field `$type`, then maps typed domain values into the required REST value representation.
+
+## Errors
+
+`APIError` records status, method, path, YouTrack error code/description, request ID, and response body. Normal error strings are concise. Tokens and Authorization headers are never included.
+
+HTTP 401/403 map to authentication errors, 404 to not-found, and other non-2xx responses to runtime/API errors.

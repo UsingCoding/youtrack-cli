@@ -1,0 +1,50 @@
+[tools]
+go = "1.27"
+golangci-lint = "2.13.2"
+goreleaser = "2.18.0"
+
+[tasks.fmt]
+description = "Format Go sources"
+run = "gofmt -w $(find . -name '*.go' -type f)"
+
+[tasks."fmt:check"]
+description = "Verify Go formatting"
+run = '''
+files="$(gofmt -l $(find . -name '*.go' -type f))"
+if [ -n "$files" ]; then
+  echo "$files"
+  exit 1
+fi
+'''
+
+[tasks.lint]
+description = "Run golangci-lint"
+run = "golangci-lint run ./..."
+
+[tasks.test]
+description = "Run tests"
+run = "go test ./..."
+
+[tasks."test:race"]
+description = "Run tests with race detector"
+run = "go test -race ./..."
+
+[tasks.coverage]
+description = "Generate coverage report"
+run = "go test -coverprofile=coverage.out ./... && go tool cover -func=coverage.out"
+
+[tasks.build]
+description = "Build the CLI"
+run = "go build -o ./bin/youtrack ./cmd/youtrack"
+
+[tasks.install]
+description = "Install the CLI into GOPATH/bin"
+run = "go install ./cmd/youtrack"
+
+[tasks."release:snapshot"]
+description = "Build a local GoReleaser snapshot"
+run = "goreleaser release --snapshot --clean"
+
+[tasks.ci]
+description = "Run the local CI suite"
+depends = ["fmt:check", "lint", "test", "test:race", "build"]
