@@ -160,6 +160,8 @@ mise run ci
 
 Tests use Testify assertions and handwritten fakes. REST tests use `httptest.Server`.
 
+- [Release instructions](RELEASE.md)
+
 ## Design/specification
 
 - [Overview](spec/mvp1/00-overview.md)

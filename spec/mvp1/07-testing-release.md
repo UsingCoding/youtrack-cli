@@ -73,3 +73,7 @@ windows/amd64
 ```
 
 Inject version, commit, and date with ldflags. Use `tar.gz`, and zip for Windows.
+
+## GitHub Releases
+
+The release implementation is defined in `.github/workflows/release.yml`. Operational instructions and GitHub token requirements are maintained in [`RELEASE.md`](../../RELEASE.md).
