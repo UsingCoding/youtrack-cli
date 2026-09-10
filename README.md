@@ -1,6 +1,6 @@
 # youtrack-cli
 
-A Go CLI for JetBrains YouTrack, inspired by the entity-oriented structure and agent-friendly workflows of `teamcity-cli`.
+A Go CLI for JetBrains YouTrack, inspired by the entity-oriented structure and agent-friendly workflows of [`teamcity-cli`](https://github.com/jetbrains/teamcity-cli).
 
 MVP1 focuses on safe issue inspection and mutation: custom fields, tags, summary/description changes, and project moves.
 
