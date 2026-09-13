@@ -20,6 +20,7 @@ const (
 	FieldBuild    FieldKind = "build"
 	FieldOwned    FieldKind = "owned"
 	FieldGroup    FieldKind = "group"
+	FieldBoard    FieldKind = "board"
 )
 
 type Cardinality string

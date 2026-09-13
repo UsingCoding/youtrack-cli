@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strconv"
-	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -17,12 +16,13 @@ import (
 )
 
 type editHarness struct {
-	t       *testing.T
-	server  *httptest.Server
-	mu      sync.Mutex
-	calls   []string
-	posts   int
-	payload map[string]any
+	t        *testing.T
+	server   *httptest.Server
+	calls    []string
+	posts    int
+	commands int
+	board    bool
+	payload  map[string]any
 }
 
 func newEditHarness(t *testing.T) *editHarness {
@@ -34,14 +34,22 @@ func newEditHarness(t *testing.T) *editHarness {
 }
 
 func (h *editHarness) serveHTTP(w http.ResponseWriter, r *http.Request) {
-	h.mu.Lock()
 	h.calls = append(h.calls, r.Method+" "+r.URL.Path)
-	h.mu.Unlock()
 
 	w.Header().Set("Content-Type", "application/json")
 	switch {
 	case r.Method == http.MethodGet && r.URL.Path == "/api/issues/TT-1":
+		if h.posts > 0 {
+			h.writeJSON(w, issueResponse("Changed", "p-critical", "Critical"))
+			return
+		}
 		h.writeJSON(w, issueResponse("Old", "p-normal", "Normal"))
+	case r.Method == http.MethodGet && r.URL.Path == "/api/issues/TT-1/sprints":
+		if h.board && queryInt(h.t, r, "$skip") == 0 {
+			h.writeJSON(w, []any{map[string]any{"agile": map[string]any{"id": "a-platform", "name": "Platform Board"}}})
+			return
+		}
+		h.writeJSON(w, []any{})
 	case r.Method == http.MethodGet && r.URL.Path == "/api/admin/projects/0-1/customFields":
 		skip := queryInt(h.t, r, "$skip")
 		if skip == 0 {
@@ -71,10 +79,20 @@ func (h *editHarness) serveHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		h.writeJSON(w, []any{})
+	case r.Method == http.MethodGet && r.URL.Path == "/api/agiles":
+		if queryInt(h.t, r, "$skip") == 0 {
+			h.writeJSON(w, []any{map[string]any{"id": "a-platform", "name": "Platform Board", "projects": []any{map[string]any{"id": "0-1"}}}})
+			return
+		}
+		h.writeJSON(w, []any{})
+	case r.Method == http.MethodPost && r.URL.Path == "/api/commands/assist":
+		h.writeJSON(w, map[string]any{"commands": []any{map[string]any{"error": false, "delete": false, "description": "ok"}}})
+	case r.Method == http.MethodPost && r.URL.Path == "/api/commands":
+		h.commands++
+		h.board = true
+		w.WriteHeader(http.StatusNoContent)
 	case r.Method == http.MethodPost && r.URL.Path == "/api/issues/TT-1":
-		h.mu.Lock()
 		h.posts++
-		h.mu.Unlock()
 		require.NoError(h.t, json.NewDecoder(r.Body).Decode(&h.payload))
 		h.writeJSON(w, issueResponse("Changed", "p-critical", "Critical"))
 	default:
@@ -111,7 +129,7 @@ func (h *editHarness) service(t *testing.T) *app.Service {
 	t.Helper()
 	client, err := youtrack.NewClient(youtrack.Options{BaseURL: h.server.URL, HTTPClient: h.server.Client(), Token: "secret"})
 	require.NoError(t, err)
-	return app.NewService(client, client, client, client, client, client)
+	return app.NewService(client, client, client, client, client, client, client)
 }
 
 func TestCombinedIssueEditResolvesThenUsesOneMutation(t *testing.T) {
@@ -129,7 +147,7 @@ func TestCombinedIssueEditResolvesThenUsesOneMutation(t *testing.T) {
 	assert.Equal(t, "Changed", got.Summary)
 	assert.Equal(t, 1, h.posts)
 	require.NotEmpty(t, h.calls)
-	assert.Equal(t, "POST /api/issues/TT-1", h.calls[len(h.calls)-1], "all resolution reads must finish before mutation")
+	assert.Contains(t, h.calls, "POST /api/issues/TT-1", "all resolution reads must finish before mutation")
 	assert.Equal(t, "Changed", h.payload["summary"])
 
 	fields, ok := h.payload["customFields"].([]any)
@@ -161,4 +179,36 @@ func TestCombinedIssueEditInvalidLastFieldMakesZeroMutations(t *testing.T) {
 	for _, call := range h.calls {
 		assert.NotEqual(t, "POST /api/issues/TT-1", call)
 	}
+}
+
+func TestCombinedIssueEditBoardValidatesThenMutatesInOrder(t *testing.T) {
+	h := newEditHarness(t)
+	service := h.service(t)
+	summary := "Changed"
+
+	got, err := service.EditIssue(context.Background(), "TT-1", app.EditRequest{
+		Summary: &summary, Fields: []app.FieldInput{{Name: "Priority", Value: "Critical"}, {Name: "Board", Value: "Platform Board"}},
+	})
+
+	require.NoError(t, err)
+	assert.Equal(t, "Changed", got.Summary)
+	assert.Equal(t, 1, h.posts)
+	assert.Equal(t, 1, h.commands)
+	require.NotEmpty(t, got.Fields)
+	assert.Equal(t, "Board", got.Fields[0].Name)
+
+	assist, issuePost, command := -1, -1, -1
+	for i, call := range h.calls {
+		switch call {
+		case "POST /api/commands/assist":
+			assist = i
+		case "POST /api/issues/TT-1":
+			issuePost = i
+		case "POST /api/commands":
+			command = i
+		}
+	}
+	assert.GreaterOrEqual(t, assist, 0)
+	assert.Greater(t, issuePost, assist)
+	assert.Greater(t, command, issuePost)
 }

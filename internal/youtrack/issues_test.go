@@ -22,15 +22,14 @@ func TestUpdateIssueSerializesResolvedFieldsAndTagsInOneRequest(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		method, path, auth = r.Method, r.URL.Path, r.Header.Get("Authorization")
 		require.NoError(t, json.NewDecoder(r.Body).Decode(&payload))
-		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte(`{"id":"2-1","idReadable":"TT-1","summary":"New","description":"","created":1,"updated":2,"project":{"id":"0-1","name":"Tools","shortName":"TT"},"tags":[{"id":"tag-1","name":"backend"}],"customFields":[]}`))
+		w.WriteHeader(http.StatusNoContent)
 	}))
 	defer server.Close()
 
 	client, err := NewClient(Options{BaseURL: server.URL + "/youtrack", Token: "secret", HTTPClient: server.Client()})
 	require.NoError(t, err)
 	summary := "New"
-	got, err := client.UpdateIssue(context.Background(), "TT-1", app.IssuePatch{
+	err = client.UpdateIssue(context.Background(), "TT-1", app.IssuePatch{
 		Summary: &summary,
 		Fields: []app.FieldAssignment{{
 			Field: domain.FieldDefinition{ID: "pf-1", Name: "Priority", Kind: domain.FieldEnum, Cardinality: domain.CardinalitySingle},
@@ -43,7 +42,6 @@ func TestUpdateIssueSerializesResolvedFieldsAndTagsInOneRequest(t *testing.T) {
 	assert.Equal(t, http.MethodPost, method)
 	assert.Equal(t, "/youtrack/api/issues/TT-1", path)
 	assert.Equal(t, "Bearer secret", auth)
-	assert.Equal(t, "TT-1", got.IDReadable)
 
 	assert.Equal(t, "New", payload["summary"])
 	fields, ok := payload["customFields"].([]any)
@@ -60,16 +58,21 @@ func TestUpdateIssueSerializesResolvedFieldsAndTagsInOneRequest(t *testing.T) {
 func TestGetIssueKeepsUnknownCustomFieldReadable(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
+		if r.URL.Path == "/api/issues/TT-1/sprints" {
+			_, _ = w.Write([]byte(`[]`))
+			return
+		}
 		_, _ = w.Write([]byte(`{"id":"2-1","idReadable":"TT-1","summary":"S","description":"","created":1,"updated":2,"project":{"id":"0-1","name":"Tools","shortName":"TT"},"tags":[],"customFields":[{"id":"x","name":"Future","$type":"FutureIssueCustomField","value":{"x":1}}]}`))
 	}))
 	defer server.Close()
+
 	client, err := NewClient(Options{BaseURL: server.URL, HTTPClient: server.Client()})
 	require.NoError(t, err)
 
 	issue, err := client.GetIssue(context.Background(), "TT-1")
 	require.NoError(t, err)
-	require.Len(t, issue.Fields, 1)
-	assert.Equal(t, domain.UnknownValue{Type: "FutureIssueCustomField"}, issue.Fields[0].Value)
+	require.Len(t, issue.Fields, 2)
+	assert.Equal(t, domain.UnknownValue{Type: "FutureIssueCustomField"}, issue.Fields[1].Value)
 }
 
 func TestSerializeStateMachineTransitionUsesEvent(t *testing.T) {

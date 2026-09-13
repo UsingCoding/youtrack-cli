@@ -27,9 +27,10 @@ Important resolver cases:
 
 Critical combined-edit integration test:
 
-- all metadata/value resolution happens before POST
-- invalid last field => zero mutation POSTs
-- valid edit => exactly one issue update POST
+- all metadata/value resolution and Board command assist happen before a mutation POST
+- invalid final field or Board value => zero mutation POSTs
+- valid ordinary edit => exactly one issue update POST followed by a final read
+- valid mixed Board edit => optional issue update POST, then exactly one Board command POST, then a final read
 
 Coverage targets:
 

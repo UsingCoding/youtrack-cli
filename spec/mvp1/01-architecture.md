@@ -47,26 +47,27 @@ Interfaces are declared by their consumer in `internal/app/ports.go`.
 
 ## Main application ports
 
-`IssueStore` provides read/update/move/tag operations. `ProjectFieldStore` provides project field definitions, bundle values, and allowed field users. `ProjectStore`, `TagStore`, `UserStore`, and `GroupStore` provide reference resolution.
+`IssueStore` provides read/update/move/tag operations. `ProjectFieldStore` provides project field definitions, bundle values, and allowed field users. `ProjectStore`, `TagStore`, `UserStore`, and `GroupStore` provide reference resolution. `BoardStore` resolves semantic Board memberships and validates/applies Board command changes.
 
 Application services receive those interfaces and never instantiate HTTP/config clients themselves.
 
 ## Mutation model
 
-Application code builds an `IssuePatch` containing summary, description, resolved field assignments, and an optional complete desired tag set. The YouTrack adapter serializes semantic values into the wire-level `$type` and value shapes.
+Application code builds an `IssuePatch` containing summary, description, resolved custom-field assignments, and an optional complete desired tag set. Board membership is a semantic multi-valued synthetic field and remains outside `IssuePatch`; its adapter owns sprint/agile and command wire shapes.
 
 Combined edit flow:
 
 ```text
-GET issue
+GET issue + issue sprints
  -> load/cache project metadata
- -> resolve every field
- -> resolve every tag
- -> validate all changes
- -> calculate final tags
- -> one POST /api/issues/{issue}
- -> render returned issue
+ -> resolve every custom field, Board value, and tag
+ -> validate Board command assist and all changes
+ -> optional POST /api/issues/{issue}
+ -> optional POST /api/commands for Board
+ -> GET issue + issue sprints
 ```
+
+Successful Board edits use the issue POST before the command POST. They are validation-safe but not transactionally atomic: a command execution failure does not roll back a successful issue POST.
 
 A validation error before the POST must leave the issue untouched.
 

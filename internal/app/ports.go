@@ -19,9 +19,13 @@ type IssuePatch struct {
 	Tags        *[]domain.Tag
 }
 
+func (p IssuePatch) Empty() bool {
+	return p.Summary == nil && p.Description == nil && len(p.Fields) == 0 && p.Tags == nil
+}
+
 type IssueStore interface {
 	GetIssue(context.Context, domain.IssueRef) (domain.Issue, error)
-	UpdateIssue(context.Context, domain.IssueRef, IssuePatch) (domain.Issue, error)
+	UpdateIssue(context.Context, domain.IssueRef, IssuePatch) error
 	MoveIssue(context.Context, domain.IssueRef, string) (domain.Issue, error)
 	AddIssueTag(context.Context, domain.IssueRef, domain.Tag) error
 	RemoveIssueTag(context.Context, domain.IssueRef, domain.Tag) error
@@ -48,6 +52,12 @@ type UserStore interface {
 
 type GroupStore interface {
 	SearchGroups(context.Context, string) ([]domain.Group, error)
+}
+
+type BoardStore interface {
+	ListBoards(context.Context) ([]domain.Board, error)
+	ValidateIssueBoardChange(context.Context, string, []domain.Board, []domain.Board) error
+	ApplyIssueBoardChange(context.Context, string, []domain.Board, []domain.Board) error
 }
 
 type RawResponse struct {

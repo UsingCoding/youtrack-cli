@@ -24,4 +24,6 @@ youtrack issue tag remove <issue> <tag>
 youtrack api <endpoint> [--method METHOD] [--data JSON | --data-file FILE]
 ```
 
+`Board` is available through the field commands and `--field Board=...`. Board set is exact-set replacement; values are board IDs or names, not sprint syntax.
+
 Global connection flags: `--profile`, `--url`, `--token`, `--timeout`. Global output flags: `--json`, `--plain`.

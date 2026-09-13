@@ -34,13 +34,16 @@ GET only: retry 502/503/504 twice with short backoff. Do not automatically retry
 
 ```text
 GET  /api/issues/{issue}
+GET  /api/issues/{issue}/sprints
 POST /api/issues/{issue}
 POST /api/issues/{issue}/project
 GET/POST /api/issues/{issue}/tags
 DELETE /api/issues/{issue}/tags/{tagID}
+POST /api/commands/assist
+POST /api/commands
 ```
 
-Combined `issue edit` serializes summary/description/customFields/final tags into one issue POST.
+Combined `issue edit` serializes summary/description/customFields/final tags into one issue POST when present. Board membership uses sprint/agile reads, `/api/commands/assist` validation, and a command POST.
 
 ## Metadata resources
 
@@ -50,6 +53,7 @@ GET /api/admin/projects?query=...
 GET /api/admin/projects/{project}/customFields
 GET /api/admin/projects/{project}/customFields/{field}/bundle/values
 GET /api/admin/customFieldSettings/bundles/user/{bundle}/aggregatedUsers
+GET /api/agiles
 GET /api/tags?query=...
 GET /api/groups?query=...
 GET /api/users/me
@@ -61,9 +65,9 @@ All field projections are centralized in `internal/youtrack/fields_query.go`. Co
 
 ## REST DTOs
 
-Read custom fields retain raw `value` JSON plus `$type`, and state-machine fields also request `possibleEvents(id,presentation)`, then map explicitly into domain values/semantic transitions. Do not build a large polymorphic DTO hierarchy.
+Read custom fields retain raw `value` JSON plus `$type`, and state-machine fields also request `possibleEvents(id,presentation)`, then map explicitly into domain values/semantic transitions. Board reads request `id,agile(id,name)` from issue sprints; Board metadata requests `id,name,projects(id)` from agiles. Do not build a large polymorphic DTO hierarchy.
 
-Write DTOs are separate. The adapter maps `FieldDefinition.Kind + Cardinality` into the correct issue custom-field `$type`, then maps typed domain values into the required REST value representation.
+Write DTOs are separate. The adapter maps `FieldDefinition.Kind + Cardinality` into the correct issue custom-field `$type`, then maps typed domain values into the required REST value representation. Board commands remain adapter-private and use `commands(error,description,delete)` during assist validation.
 
 ## Errors
 

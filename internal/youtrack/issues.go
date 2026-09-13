@@ -20,10 +20,19 @@ func (c *Client) GetIssue(ctx context.Context, ref domain.IssueRef) (domain.Issu
 	if err := c.doJSON(ctx, http.MethodGet, "/api/issues/"+string(ref), q, nil, &data); err != nil {
 		return domain.Issue{}, err
 	}
-	return mapIssue(data)
+	issue, err := mapIssue(data)
+	if err != nil {
+		return domain.Issue{}, err
+	}
+	boards, err := c.listIssueBoards(ctx, ref)
+	if err != nil {
+		return domain.Issue{}, err
+	}
+	issue.Fields = append([]domain.IssueField{boardIssueField(boards)}, issue.Fields...)
+	return issue, nil
 }
 
-func (c *Client) UpdateIssue(ctx context.Context, ref domain.IssueRef, patch app.IssuePatch) (domain.Issue, error) {
+func (c *Client) UpdateIssue(ctx context.Context, ref domain.IssueRef, patch app.IssuePatch) error {
 	payload := map[string]any{}
 	if patch.Summary != nil {
 		payload["summary"] = *patch.Summary
@@ -36,7 +45,7 @@ func (c *Client) UpdateIssue(ctx context.Context, ref domain.IssueRef, patch app
 		for _, a := range patch.Fields {
 			item, err := serializeAssignment(a)
 			if err != nil {
-				return domain.Issue{}, err
+				return err
 			}
 			fields = append(fields, item)
 		}
@@ -49,12 +58,7 @@ func (c *Client) UpdateIssue(ctx context.Context, ref domain.IssueRef, patch app
 		}
 		payload["tags"] = tags
 	}
-	var data dto.Issue
-	q := url.Values{"fields": []string{issueFields}}
-	if err := c.doJSON(ctx, http.MethodPost, "/api/issues/"+string(ref), q, payload, &data); err != nil {
-		return domain.Issue{}, err
-	}
-	return mapIssue(data)
+	return c.doJSON(ctx, http.MethodPost, "/api/issues/"+string(ref), nil, payload, nil)
 }
 
 func (c *Client) MoveIssue(ctx context.Context, ref domain.IssueRef, projectID string) (domain.Issue, error) {

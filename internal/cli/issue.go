@@ -43,7 +43,7 @@ func issueEditCommand(deps Dependencies) *appcli.Command {
 			&appcli.StringFlag{Name: "summary"},
 			&appcli.StringFlag{Name: "description"},
 			&appcli.StringFlag{Name: "description-file"},
-			&appcli.StringSliceFlag{Name: "field", Usage: "custom field assignment NAME=VALUE; repeat for multi-value fields"},
+			&appcli.StringSliceFlag{Name: "field", Usage: "issue field assignment NAME=VALUE; repeat for multi-value fields"},
 			&appcli.StringSliceFlag{Name: "tag", Usage: "tag to add"},
 			&appcli.StringSliceFlag{Name: "remove-tag", Usage: "tag to remove"},
 		},
@@ -115,7 +115,7 @@ func issueMoveCommand(deps Dependencies) *appcli.Command {
 }
 
 func issueFieldCommand(deps Dependencies) *appcli.Command {
-	return &appcli.Command{Name: "field", Usage: "inspect and edit issue custom fields", Commands: []*appcli.Command{
+	return &appcli.Command{Name: "field", Usage: "inspect and edit issue fields", Commands: []*appcli.Command{
 		{Name: "list", ArgsUsage: "<issue>", Action: func(ctx context.Context, cmd *appcli.Command) error {
 			args := cmd.Args().Slice()
 			if err := requireArgs(args, 1, 1, "youtrack issue field list <issue>"); err != nil {

@@ -1,7 +1,7 @@
 ---
 name: youtrack-cli
 version: 0.1.0
-description: Use when working with YouTrack issues from a coding agent; drives the `youtrack` CLI for issue inspection, custom fields, tags, project moves, and raw API access.
+description: Use when working with YouTrack issues from a coding agent; drives the `youtrack` CLI for issue inspection, fields including Board membership, tags, project moves, and raw API access.
 ---
 
 # YouTrack CLI (`youtrack`)
@@ -26,6 +26,9 @@ Do not guess command flags, custom-field names, enum/state/version values, or us
 - Use `issue edit` when several issue changes should be validated and applied together.
 - Use `@me` only for user fields and `@none` to clear nullable fields.
 - Re-read the issue after a meaningful mutation when verification matters.
+- Treat `Board` as a reserved multi-value field: inspect it first, use board IDs/names only, and remember that set replaces the full membership set.
+- Do not invent sprint syntax. YouTrack selects the board's current/default sprint.
+- A mixed normal-field and Board edit validates first but is not transactionally atomic if Board command execution later fails.
 
 ## Core commands
 

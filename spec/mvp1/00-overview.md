@@ -19,9 +19,9 @@
 - profiles and permanent-token authentication
 - issue view
 - summary and description editing
-- custom-field list/get/set/clear
+- custom-field and Board membership list/get/set/clear
 - tag list/add/remove
-- combined `issue edit`
+- combined `issue edit`, including Board membership
 - move issue to another project
 - stable JSON and shell-friendly plain output
 - authenticated raw REST escape hatch
@@ -29,7 +29,7 @@
 
 ## Non-goals
 
-Issue creation/deletion, comments, attachments, links, work items, issue search, boards/agile, project mutation, user administration, saved searches, workflows, bulk updates, and a TUI are outside MVP1.
+Issue creation/deletion, comments, attachments, links, work items, issue search, board configuration CRUD, project mutation, user administration, saved searches, workflows, bulk updates, and a TUI are outside MVP1.
 
 ## Core invariants
 
@@ -39,7 +39,7 @@ Issue creation/deletion, comments, attachments, links, work items, issue search,
 4. Every collection adapter handles pagination.
 5. Project custom-field values are resolved against project metadata/bundles.
 6. `issue edit` resolves and validates all values before any mutation.
-7. Combined issue edits use one `POST /api/issues/{issue}` when representable as one issue update.
+7. Ordinary representable combined edits use one `POST /api/issues/{issue}`; a successful Board edit uses zero or one such POST plus one validated command POST, then a read.
 8. Project movement is a dedicated operation.
 9. JSON output uses explicit compatibility-sensitive output DTOs.
 10. Tests use Testify assertions and handwritten fakes by default.
@@ -53,6 +53,6 @@ Issue creation/deletion, comments, attachments, links, work items, issue search,
 - no token leakage
 - unknown REST custom-field types do not break issue reads
 - invalid combined edit performs zero mutation requests
-- valid combined edit performs one issue update request
+- valid ordinary combined edit performs one issue update request; a successful Board edit performs its validated command mutation after ordinary updates
 - embedded skill matches actual CLI behavior
 - `mise run ci` passes

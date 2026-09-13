@@ -62,6 +62,8 @@ youtrack issue edit TT-123 \
 
 `--field` splits on the first `=` only. `--description` and `--description-file` are mutually exclusive. Adding and removing the same tag is invalid. No mutation flags is invalid. Slice-flag comma splitting is disabled, so commas inside a field value, tag, or raw API header remain literal.
 
+Repeated `--field Board=...` values replace the Board membership set. All resolution and Board command-assist validation happen before any mutation. Mixed edits may use one issue POST followed by one Board command POST; execution is non-atomic after validation.
+
 ## Field commands
 
 ```bash
@@ -72,6 +74,8 @@ youtrack issue field set TT-123 "Fix versions" 2026.2 2026.3
 youtrack issue field set TT-123 Assignee @me
 youtrack issue field clear TT-123 Assignee
 ```
+
+`Board` is a reserved synthetic field available from view/list/get/set/clear and `--field Board=...`. Values are board IDs or names; set replaces the whole membership set and clear yields an empty set. The CLI does not accept sprint syntax.
 
 ## Tags
 

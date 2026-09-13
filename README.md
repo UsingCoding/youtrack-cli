@@ -94,6 +94,19 @@ youtrack issue edit TT-123 \
 
 All supplied references are resolved before mutation. When the requested changes can be represented by one YouTrack issue update, the CLI sends one mutation request.
 
+## Board membership
+
+`Board` is a reserved synthetic multi-value field. It lists the issue's agile-board memberships; values are board database IDs or names, never sprint syntax. Setting it replaces the complete set, and YouTrack selects a board's current/default sprint:
+
+```bash
+youtrack issue field get TT-123 Board --json
+youtrack issue field set TT-123 Board "Platform Board" "Operations Board"
+youtrack issue field clear TT-123 Board
+youtrack issue edit TT-123 --field "Board=Platform Board" --field "Board=Operations Board"
+```
+
+Board removals use YouTrack command parsing and can be rejected for query-driven sprint-disabled boards. The CLI validates the complete command first. A mixed edit validates all values first, then sends the ordinary issue update before the Board command; these two endpoints are not atomic, so an execution-time Board failure leaves a successful ordinary update intact. A real custom field named Board is addressable only by its project-field ID.
+
 ## Tags
 
 ```bash

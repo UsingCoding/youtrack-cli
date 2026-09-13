@@ -31,5 +31,7 @@ The skill teaches workflows, not REST internals:
 - use field list/get when uncertain
 - use `issue move` for project movement
 - verify meaningful mutations by reading the issue again when appropriate
+- inspect and mutate Board like a field using Board IDs/names only; do not invent sprint syntax
+- understand that Board set replaces the membership set and mixed Board edits are non-atomic after validation
 
 When command behavior changes, update the skill/reference docs in the same change.

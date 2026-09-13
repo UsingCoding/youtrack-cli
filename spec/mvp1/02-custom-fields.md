@@ -6,8 +6,7 @@ The domain uses `FieldKind`:
 
 ```text
 string, integer, float, date, datetime, period, text,
-enum, state, user, version, build, owned, group, unknown
-```
+enum, state, user, version, build, owned, group, board, unknown
 
 Cardinality is independent:
 
@@ -96,6 +95,10 @@ youtrack issue edit TT-123 \
 ```
 
 A scalar field supplied multiple times is a validation error.
+
+## Board membership
+
+`Board` is a reserved case-insensitive synthetic multi-value field, not a project custom field. Reads use issue sprint memberships and expose board IDs/names. Set and repeated combined-edit values replace the exact membership set; values resolve by database ID, exact name, then unique case-insensitive name among current or project-eligible boards. `@none` alone clears it; it cannot be combined with board values. YouTrack selects the current/default sprint, so no sprint syntax is accepted. A colliding custom field is addressable by project-field ID only.
 
 ## State-machine fields
 

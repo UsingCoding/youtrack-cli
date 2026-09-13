@@ -28,11 +28,12 @@ type Service struct {
 	tags     TagStore
 	users    UserStore
 	groups   GroupStore
+	boards   BoardStore
 	resolver *FieldResolver
 }
 
-func NewService(issues IssueStore, fields ProjectFieldStore, projects ProjectStore, tags TagStore, users UserStore, groups GroupStore) *Service {
-	return &Service{issues: issues, fields: fields, projects: projects, tags: tags, users: users, groups: groups, resolver: NewFieldResolver(fields, users, groups)}
+func NewService(issues IssueStore, fields ProjectFieldStore, projects ProjectStore, tags TagStore, users UserStore, groups GroupStore, boards BoardStore) *Service {
+	return &Service{issues: issues, fields: fields, projects: projects, tags: tags, users: users, groups: groups, boards: boards, resolver: NewFieldResolver(fields, users, groups)}
 }
 
 func (s *Service) GetIssue(ctx context.Context, ref domain.IssueRef) (domain.Issue, error) {
@@ -55,6 +56,13 @@ func (s *Service) GetField(ctx context.Context, ref domain.IssueRef, field domai
 	fields, err := s.ListFields(ctx, ref)
 	if err != nil {
 		return domain.IssueField{}, err
+	}
+	if isBoardRef(string(field)) {
+		for _, f := range fields {
+			if f.Kind == domain.FieldBoard {
+				return f, nil
+			}
+		}
 	}
 	for _, f := range fields {
 		if f.ID == string(field) || f.Name == string(field) {
@@ -81,15 +89,30 @@ func (s *Service) SetField(ctx context.Context, ref domain.IssueRef, field domai
 	if err != nil {
 		return domain.Issue{}, err
 	}
+	if isBoardRef(string(field)) {
+		change, err := s.resolveBoardChange(ctx, issue, values, false)
+		if err != nil {
+			return domain.Issue{}, err
+		}
+		if change.Empty() {
+			return issue, nil
+		}
+		if err := s.boards.ValidateIssueBoardChange(ctx, issue.ID, change.Add, change.Remove); err != nil {
+			return domain.Issue{}, err
+		}
+		if err := s.boards.ApplyIssueBoardChange(ctx, issue.ID, change.Add, change.Remove); err != nil {
+			return domain.Issue{}, err
+		}
+		return s.GetIssue(ctx, ref)
+	}
 	assignment, err := s.resolver.Resolve(ctx, issue, field, values, false)
 	if err != nil {
 		return domain.Issue{}, err
 	}
-	updated, err := s.issues.UpdateIssue(ctx, ref, IssuePatch{Fields: []FieldAssignment{assignment}})
-	if err != nil {
+	if err := s.issues.UpdateIssue(ctx, ref, IssuePatch{Fields: []FieldAssignment{assignment}}); err != nil {
 		return domain.Issue{}, err
 	}
-	return s.enrichIssue(ctx, updated)
+	return s.GetIssue(ctx, ref)
 }
 
 func (s *Service) ClearField(ctx context.Context, ref domain.IssueRef, field domain.FieldRef) (domain.Issue, error) {
@@ -97,15 +120,30 @@ func (s *Service) ClearField(ctx context.Context, ref domain.IssueRef, field dom
 	if err != nil {
 		return domain.Issue{}, err
 	}
+	if isBoardRef(string(field)) {
+		change, err := s.resolveBoardChange(ctx, issue, nil, true)
+		if err != nil {
+			return domain.Issue{}, err
+		}
+		if change.Empty() {
+			return issue, nil
+		}
+		if err := s.boards.ValidateIssueBoardChange(ctx, issue.ID, change.Add, change.Remove); err != nil {
+			return domain.Issue{}, err
+		}
+		if err := s.boards.ApplyIssueBoardChange(ctx, issue.ID, change.Add, change.Remove); err != nil {
+			return domain.Issue{}, err
+		}
+		return s.GetIssue(ctx, ref)
+	}
 	assignment, err := s.resolver.Resolve(ctx, issue, field, nil, true)
 	if err != nil {
 		return domain.Issue{}, err
 	}
-	updated, err := s.issues.UpdateIssue(ctx, ref, IssuePatch{Fields: []FieldAssignment{assignment}})
-	if err != nil {
+	if err := s.issues.UpdateIssue(ctx, ref, IssuePatch{Fields: []FieldAssignment{assignment}}); err != nil {
 		return domain.Issue{}, err
 	}
-	return s.enrichIssue(ctx, updated)
+	return s.GetIssue(ctx, ref)
 }
 
 func (s *Service) EditIssue(ctx context.Context, ref domain.IssueRef, req EditRequest) (domain.Issue, error) {
@@ -120,10 +158,15 @@ func (s *Service) EditIssue(ctx context.Context, ref domain.IssueRef, req EditRe
 	grouped := map[string][]string{}
 	originalName := map[string]string{}
 	order := []string{}
+	var boardValues []string
 	for _, in := range req.Fields {
 		name := strings.TrimSpace(in.Name)
 		if name == "" {
 			return domain.Issue{}, Validationf("custom field name cannot be empty")
+		}
+		if isBoardRef(name) {
+			boardValues = append(boardValues, in.Value)
+			continue
 		}
 		key := strings.ToLower(name)
 		if _, ok := grouped[key]; !ok {
@@ -153,13 +196,33 @@ func (s *Service) EditIssue(ctx context.Context, ref domain.IssueRef, req EditRe
 		desiredTags = &tags
 	}
 
-	updated, err := s.issues.UpdateIssue(ctx, ref, IssuePatch{
-		Summary: req.Summary, Description: req.Description, Fields: assignments, Tags: desiredTags,
-	})
-	if err != nil {
-		return domain.Issue{}, err
+	var boardChange boardChange
+	if len(boardValues) > 0 {
+		boardChange, err = s.resolveBoardChange(ctx, issue, boardValues, false)
+		if err != nil {
+			return domain.Issue{}, err
+		}
+		if !boardChange.Empty() {
+			if err := s.boards.ValidateIssueBoardChange(ctx, issue.ID, boardChange.Add, boardChange.Remove); err != nil {
+				return domain.Issue{}, err
+			}
+		}
 	}
-	return s.enrichIssue(ctx, updated)
+	patch := IssuePatch{Summary: req.Summary, Description: req.Description, Fields: assignments, Tags: desiredTags}
+	if !patch.Empty() {
+		if err := s.issues.UpdateIssue(ctx, ref, patch); err != nil {
+			return domain.Issue{}, err
+		}
+	}
+	if !boardChange.Empty() {
+		if err := s.boards.ApplyIssueBoardChange(ctx, issue.ID, boardChange.Add, boardChange.Remove); err != nil {
+			return domain.Issue{}, err
+		}
+	}
+	if patch.Empty() && boardChange.Empty() {
+		return issue, nil
+	}
+	return s.GetIssue(ctx, ref)
 }
 
 func (s *Service) MoveIssue(ctx context.Context, ref domain.IssueRef, projectRef domain.ProjectRef) (domain.Issue, error) {
@@ -221,6 +284,9 @@ func (s *Service) enrichIssue(ctx context.Context, issue domain.Issue) (domain.I
 		byID[d.ID] = d
 	}
 	for i := range issue.Fields {
+		if issue.Fields[i].Kind == domain.FieldBoard {
+			continue
+		}
 		def, ok := byName[issue.Fields[i].Name]
 		if !ok {
 			def, ok = byID[issue.Fields[i].ID]

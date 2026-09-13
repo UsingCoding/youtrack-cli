@@ -11,31 +11,35 @@ import (
 )
 
 type serviceFake struct {
-	issue       domain.Issue
-	defs        []domain.FieldDefinition
-	options     map[string][]domain.FieldOption
-	searchTags  map[string][]domain.Tag
-	updateCalls int
-	lastPatch   IssuePatch
+	issue          domain.Issue
+	defs           []domain.FieldDefinition
+	options        map[string][]domain.FieldOption
+	searchTags     map[string][]domain.Tag
+	boards         []domain.Board
+	updateCalls    int
+	boardValidates int
+	boardApplies   int
+	lastPatch      IssuePatch
+	lastAdd        []domain.Board
+	lastRemove     []domain.Board
 }
 
 func (f *serviceFake) GetIssue(context.Context, domain.IssueRef) (domain.Issue, error) {
 	return f.issue, nil
 }
-func (f *serviceFake) UpdateIssue(_ context.Context, _ domain.IssueRef, patch IssuePatch) (domain.Issue, error) {
+func (f *serviceFake) UpdateIssue(_ context.Context, _ domain.IssueRef, patch IssuePatch) error {
 	f.updateCalls++
 	f.lastPatch = patch
-	out := f.issue
 	if patch.Summary != nil {
-		out.Summary = *patch.Summary
+		f.issue.Summary = *patch.Summary
 	}
 	if patch.Description != nil {
-		out.Description = *patch.Description
+		f.issue.Description = *patch.Description
 	}
 	if patch.Tags != nil {
-		out.Tags = append([]domain.Tag(nil), (*patch.Tags)...)
+		f.issue.Tags = append([]domain.Tag(nil), (*patch.Tags)...)
 	}
-	return out, nil
+	return nil
 }
 func (f *serviceFake) MoveIssue(context.Context, domain.IssueRef, string) (domain.Issue, error) {
 	return f.issue, nil
@@ -63,6 +67,18 @@ func (f *serviceFake) SearchTags(_ context.Context, q string) ([]domain.Tag, err
 func (f *serviceFake) Me(context.Context) (domain.User, error)                      { return domain.User{}, nil }
 func (f *serviceFake) SearchGroups(context.Context, string) ([]domain.Group, error) { return nil, nil }
 
+func (f *serviceFake) ListBoards(context.Context) ([]domain.Board, error) { return f.boards, nil }
+func (f *serviceFake) ValidateIssueBoardChange(_ context.Context, _ string, add, remove []domain.Board) error {
+	f.boardValidates++
+	f.lastAdd, f.lastRemove = add, remove
+	return nil
+}
+func (f *serviceFake) ApplyIssueBoardChange(_ context.Context, _ string, add, remove []domain.Board) error {
+	f.boardApplies++
+	f.lastAdd, f.lastRemove = add, remove
+	return nil
+}
+
 func serviceFixture() *serviceFake {
 	return &serviceFake{
 		issue: domain.Issue{
@@ -86,7 +102,7 @@ func serviceFixture() *serviceFake {
 
 func TestEditIssueValidatesEverythingBeforeMutation(t *testing.T) {
 	fake := serviceFixture()
-	service := NewService(fake, fake, fake, fake, fake, fake)
+	service := NewService(fake, fake, fake, fake, fake, fake, fake)
 	newSummary := "New"
 
 	_, err := service.EditIssue(context.Background(), "TT-1", EditRequest{
@@ -101,7 +117,7 @@ func TestEditIssueValidatesEverythingBeforeMutation(t *testing.T) {
 
 func TestEditIssueUsesOneCombinedMutation(t *testing.T) {
 	fake := serviceFixture()
-	service := NewService(fake, fake, fake, fake, fake, fake)
+	service := NewService(fake, fake, fake, fake, fake, fake, fake)
 	newSummary := "New"
 
 	got, err := service.EditIssue(context.Background(), "TT-1", EditRequest{
@@ -120,7 +136,7 @@ func TestEditIssueUsesOneCombinedMutation(t *testing.T) {
 
 func TestEditIssueRejectsTagConflictBeforeMutation(t *testing.T) {
 	fake := serviceFixture()
-	service := NewService(fake, fake, fake, fake, fake, fake)
+	service := NewService(fake, fake, fake, fake, fake, fake, fake)
 	_, err := service.EditIssue(context.Background(), "TT-1", EditRequest{AddTags: []string{"Backend"}, RemoveTags: []string{"backend"}})
 	require.Error(t, err)
 	assert.Equal(t, 0, fake.updateCalls)
