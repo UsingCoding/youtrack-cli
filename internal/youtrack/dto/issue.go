@@ -46,3 +46,13 @@ type Issue struct {
 	Tags         []Tag              `json:"tags"`
 	CustomFields []IssueCustomField `json:"customFields"`
 }
+
+type IssueSummary struct {
+	ID         string  `json:"id"`
+	IDReadable string  `json:"idReadable"`
+	Summary    string  `json:"summary"`
+	Project    Project `json:"project"`
+	Created    int64   `json:"created"`
+	Updated    int64   `json:"updated"`
+	Resolved   *int64  `json:"resolved"`
+}

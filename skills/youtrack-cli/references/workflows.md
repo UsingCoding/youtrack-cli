@@ -1,5 +1,15 @@
 # Workflows
 
+## Search then inspect
+
+```bash
+youtrack issue search 'project: APP #Unresolved sort by: updated desc' --limit 20 --json
+youtrack issue view APP-123 --json
+youtrack issue field list APP-123 --json
+```
+
+Use a quoted bounded search first. Select the readable ID from the server-ordered results, then inspect the issue and fields before mutating it.
+
 ## Safe issue update
 
 ```bash

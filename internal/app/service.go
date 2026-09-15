@@ -22,18 +22,19 @@ type EditRequest struct {
 }
 
 type Service struct {
-	issues   IssueStore
-	fields   ProjectFieldStore
-	projects ProjectStore
-	tags     TagStore
-	users    UserStore
-	groups   GroupStore
-	boards   BoardStore
-	resolver *FieldResolver
+	issues      IssueStore
+	issueSearch IssueSearchStore
+	fields      ProjectFieldStore
+	projects    ProjectStore
+	tags        TagStore
+	users       UserStore
+	groups      GroupStore
+	boards      BoardStore
+	resolver    *FieldResolver
 }
 
-func NewService(issues IssueStore, fields ProjectFieldStore, projects ProjectStore, tags TagStore, users UserStore, groups GroupStore, boards BoardStore) *Service {
-	return &Service{issues: issues, fields: fields, projects: projects, tags: tags, users: users, groups: groups, boards: boards, resolver: NewFieldResolver(fields, users, groups)}
+func NewService(issues IssueStore, issueSearch IssueSearchStore, fields ProjectFieldStore, projects ProjectStore, tags TagStore, users UserStore, groups GroupStore, boards BoardStore) *Service {
+	return &Service{issues: issues, issueSearch: issueSearch, fields: fields, projects: projects, tags: tags, users: users, groups: groups, boards: boards, resolver: NewFieldResolver(fields, users, groups)}
 }
 
 func (s *Service) GetIssue(ctx context.Context, ref domain.IssueRef) (domain.Issue, error) {

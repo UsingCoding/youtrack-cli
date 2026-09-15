@@ -13,7 +13,7 @@ import (
 
 func issueCommand(deps Dependencies) *appcli.Command {
 	return &appcli.Command{Name: "issue", Usage: "inspect and edit issues", Commands: []*appcli.Command{
-		issueViewCommand(deps), issueEditCommand(deps), issueMoveCommand(deps), issueFieldCommand(deps), issueTagCommand(deps),
+		issueViewCommand(deps), issueSearchCommand(deps), issueEditCommand(deps), issueMoveCommand(deps), issueFieldCommand(deps), issueTagCommand(deps),
 	}}
 }
 
@@ -33,6 +33,34 @@ func issueViewCommand(deps Dependencies) *appcli.Command {
 		}
 		return rt.renderer.Issue(issue)
 	}}
+}
+
+func issueSearchCommand(deps Dependencies) *appcli.Command {
+	return &appcli.Command{
+		Name: "search", Usage: "search issues with a YouTrack query", ArgsUsage: "<query>", Flags: paginationFlags(),
+		Action: func(ctx context.Context, cmd *appcli.Command) error {
+			args := cmd.Args().Slice()
+			if err := requireArgs(args, 1, 1, "youtrack issue search <query> [--limit <n>] [--offset <n>] [--all]"); err != nil {
+				return err
+			}
+			if strings.TrimSpace(args[0]) == "" {
+				return app.Validationf("search query must not be blank")
+			}
+			request, err := pageRequest(cmd)
+			if err != nil {
+				return err
+			}
+			rt, err := buildRuntime(deps, cmd)
+			if err != nil {
+				return err
+			}
+			items, err := rt.service.SearchIssues(ctx, args[0], request)
+			if err != nil {
+				return err
+			}
+			return rt.renderer.IssueSummaries(items)
+		},
+	}
 }
 
 func issueEditCommand(deps Dependencies) *appcli.Command {
