@@ -44,4 +44,4 @@ The skill teaches agents to:
 
 The skill continues to prefer structured commands over raw REST and to avoid exposing permanent tokens. It calls out that direct search strings and comment/description text may contain shell-sensitive characters and should be quoted or supplied from files.
 
-Skill examples must match [`03-cli-contract.md`](03-cli-contract.md), and its JSON examples must match [`05-config-auth-output.md`](05-config-auth-output.md).
+Skill command and JSON examples must match [`03-cli-contract.md`](03-cli-contract.md).

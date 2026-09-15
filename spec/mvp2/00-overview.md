@@ -57,6 +57,6 @@ The authenticated raw REST command remains the escape hatch for capabilities out
 - comment listing handles pagination
 - comment add creates a text-only comment
 - comment remove performs a soft removal and never calls HTTP `DELETE`
-- stable JSON output matches [`05-config-auth-output.md`](05-config-auth-output.md)
+- stable JSON output matches [`03-cli-contract.md`](03-cli-contract.md)
 - embedded skill documentation matches the implemented commands
 - `mise run ci` passes
