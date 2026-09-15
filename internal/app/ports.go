@@ -46,6 +46,11 @@ type IssueSearchStore interface {
 	SearchIssues(context.Context, string, Page) ([]domain.IssueSummary, error)
 }
 
+type SavedSearchStore interface {
+	GetSavedSearch(context.Context, string) (domain.SavedSearch, error)
+	ListSavedSearches(context.Context, Page) ([]domain.SavedSearch, error)
+}
+
 type ProjectFieldStore interface {
 	ListProjectFields(context.Context, string) ([]domain.FieldDefinition, error)
 	ListFieldOptions(context.Context, string, domain.FieldDefinition) ([]domain.FieldOption, error)

@@ -35,7 +35,7 @@ func (f *searchStoreFake) SearchIssues(_ context.Context, query string, page Pag
 }
 
 func searchService(store *searchStoreFake) *Service {
-	return NewService(nil, store, nil, nil, nil, nil, nil, nil)
+	return NewService(nil, store, nil, nil, nil, nil, nil, nil, nil)
 }
 
 func summary(id string) domain.IssueSummary {

@@ -1,7 +1,7 @@
 ---
 name: youtrack-cli
-version: 0.1.0
-description: Use when working with YouTrack issues from a coding agent; drives the `youtrack` CLI for issue inspection, fields including Board membership, tags, project moves, and raw API access.
+version: 0.2.0
+description: Use when working with YouTrack issues and visible saved searches from a coding agent; drives the `youtrack` CLI for inspection, fields including Board membership, tags, project moves, and raw API access.
 ---
 
 # YouTrack CLI (`youtrack`)
@@ -12,6 +12,7 @@ description: Use when working with YouTrack issues from a coding agent; drives t
 youtrack auth status
 youtrack issue search 'project: APP #Unresolved' --limit 20 --json
 youtrack issue view TT-123 --json
+youtrack saved-search view 'Assigned to me' --limit 20 --json
 youtrack issue field list TT-123 --json
 ```
 
@@ -32,6 +33,8 @@ Do not guess command flags, custom-field names, enum/state/version values, or us
 - A mixed normal-field and Board edit validates first but is not transactionally atomic if Board command execution later fails.
 - Quote the single `issue search` query, use YouTrack's server-side search rather than local filtering, and preserve explicit server sorting.
 - Prefer a bounded `--limit` for discovery; reserve `--all` for necessary full scans.
+- Use `saved-search view` with an existing visible saved search instead of recreating its server-side filter locally.
+- Saved searches are view-only: do not use structured create, update, delete, or sharing operations.
 
 ## Core commands
 
@@ -40,6 +43,7 @@ Do not guess command flags, custom-field names, enum/state/version values, or us
 | Auth | `auth login`, `auth logout`, `auth status` |
 | Issue | `issue search`, `issue view`, `issue edit`, `issue move` |
 | Fields | `issue field list/get/set/clear` |
+| Saved searches | `saved-search view` |
 | Tags | `issue tag list/add/remove` |
 | API | `api <endpoint>` |
 | Config | `config list/get/set` |

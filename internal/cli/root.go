@@ -23,7 +23,7 @@ func NewRoot(deps Dependencies) *appcli.Command {
 			&appcli.BoolFlag{Name: "debug", Usage: "enable diagnostic errors"},
 		},
 		Commands: []*appcli.Command{
-			authCommand(deps), issueCommand(deps), apiCommand(deps), configCommand(deps), skillCommand(deps), versionCommand(deps),
+			authCommand(deps), issueCommand(deps), savedSearchCommand(deps), apiCommand(deps), configCommand(deps), skillCommand(deps), versionCommand(deps),
 		},
 		Action: func(ctx context.Context, cmd *appcli.Command) error {
 			return appcli.ShowAppHelp(cmd)

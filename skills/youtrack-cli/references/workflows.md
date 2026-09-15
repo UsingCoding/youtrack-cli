@@ -10,6 +10,16 @@ youtrack issue field list APP-123 --json
 
 Use a quoted bounded search first. Select the readable ID from the server-ordered results, then inspect the issue and fields before mutating it.
 
+## Saved search then inspect
+
+```bash
+youtrack saved-search view 'Release blockers' --limit 20 --json
+youtrack issue view APP-123 --json
+youtrack issue field list APP-123 --json
+```
+
+Use an existing visible saved search when its server-side filter captures the intended work. Inspect server-ordered results; do not copy or recreate the filter locally.
+
 ## Safe issue update
 
 ```bash

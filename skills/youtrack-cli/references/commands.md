@@ -2,6 +2,7 @@
 
 ```bash
 youtrack issue search <query> [--limit <n>] [--offset <n>] [--all]
+youtrack saved-search view <saved-search> [--limit <n>] [--offset <n>] [--all]
 
 youtrack issue view <issue> [--json|--plain]
 
@@ -33,6 +34,8 @@ youtrack issue search -- '-State: Done project: APP'
 ```
 
 Use `--json` for structured result consumption. Global flags work from nested commands.
+
+`saved-search view` accepts one database ID or quoted visible name. It resolves the visible server-side saved query, then pages matching issues with the same defaults and validation as `issue search`: offset `0`, limit `50`, a positive explicit `--limit`, non-negative `--offset`, and no explicit `--limit` with `--all`. Use `--json` for the saved-search metadata and issue summaries, or `--plain` for matching issue lines only. The command is view-only; structured saved-search create, update, delete, and sharing operations are unavailable.
 
 `Board` is available through the field commands and `--field Board=...`. Board set is exact-set replacement; values are board IDs or names, not sprint syntax.
 

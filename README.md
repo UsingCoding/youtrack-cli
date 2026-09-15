@@ -2,11 +2,11 @@
 
 A Go CLI for JetBrains YouTrack, inspired by the entity-oriented structure and agent-friendly workflows of [`teamcity-cli`](https://github.com/jetbrains/teamcity-cli).
 
-MVP1 focuses on safe issue inspection and mutation: custom fields, tags, summary/description changes, and project moves. MVP2 issue search is implemented; the remaining MVP2 epics are not yet documented as available.
+MVP1 focuses on safe issue inspection and mutation: custom fields, tags, summary/description changes, and project moves. MVP2 issue search and read-only saved-search view are implemented; the remaining MVP2 epics are not yet documented as available.
 
 ## Status
 
-MVP1 implementation plus MVP2 issue search. The implementation specification is split across [`spec/mvp1`](spec/mvp1/00-overview.md) and [`spec/mvp2`](spec/mvp2/00-overview.md).
+MVP1 implementation plus MVP2 issue search and read-only saved-search view. The implementation specification is split across [`spec/mvp1`](spec/mvp1/00-overview.md) and [`spec/mvp2`](spec/mvp2/00-overview.md).
 
 ## Install for development
 
@@ -64,6 +64,16 @@ youtrack issue search 'project: APP #Unresolved' --json
 ```
 
 YouTrack performs filtering and sorting; the CLI preserves the quoted query and any explicit sort clause. Prefer bounded discovery with `--limit`; reserve `--all` for a genuinely complete collection.
+
+## Saved searches
+
+```bash
+youtrack saved-search view 'Assigned to me'
+youtrack saved-search view 51-33 --limit 20
+youtrack saved-search view 'Release blockers' --all
+```
+
+`saved-search view` runs the visible server-side saved query. Result flags page its matching issues; the command is view-only.
 
 ## Custom fields
 

@@ -10,15 +10,7 @@ import (
 func (r *Renderer) IssueSummaries(items []domain.IssueSummary) error {
 	switch r.Format {
 	case FormatJSON:
-		out := make([]IssueSummaryJSON, 0, len(items))
-		for _, item := range items {
-			out = append(out, IssueSummaryJSON{
-				ID: item.IDReadable, EntityID: item.ID, Summary: item.Summary,
-				Project: ProjectJSON{EntityID: item.Project.ID, Name: item.Project.Name, ShortName: item.Project.ShortName},
-				Created: item.Created, Updated: item.Updated, Resolved: item.Resolved,
-			})
-		}
-		return r.json(out)
+		return r.json(issueSummariesJSON(items))
 	case FormatPlain:
 		for _, item := range items {
 			if _, err := fmt.Fprintf(r.Out, "%s\t%s\n", item.IDReadable, item.Summary); err != nil {

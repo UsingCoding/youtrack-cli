@@ -105,7 +105,7 @@ func serviceFixture() *serviceFake {
 
 func TestEditIssueValidatesEverythingBeforeMutation(t *testing.T) {
 	fake := serviceFixture()
-	service := NewService(fake, fake, fake, fake, fake, fake, fake, fake)
+	service := NewService(fake, fake, nil, fake, fake, fake, fake, fake, fake)
 	newSummary := "New"
 
 	_, err := service.EditIssue(context.Background(), "TT-1", EditRequest{
@@ -120,7 +120,7 @@ func TestEditIssueValidatesEverythingBeforeMutation(t *testing.T) {
 
 func TestEditIssueUsesOneCombinedMutation(t *testing.T) {
 	fake := serviceFixture()
-	service := NewService(fake, fake, fake, fake, fake, fake, fake, fake)
+	service := NewService(fake, fake, nil, fake, fake, fake, fake, fake, fake)
 	newSummary := "New"
 
 	got, err := service.EditIssue(context.Background(), "TT-1", EditRequest{
@@ -139,7 +139,7 @@ func TestEditIssueUsesOneCombinedMutation(t *testing.T) {
 
 func TestEditIssueRejectsTagConflictBeforeMutation(t *testing.T) {
 	fake := serviceFixture()
-	service := NewService(fake, fake, fake, fake, fake, fake, fake, fake)
+	service := NewService(fake, fake, nil, fake, fake, fake, fake, fake, fake)
 	_, err := service.EditIssue(context.Background(), "TT-1", EditRequest{AddTags: []string{"Backend"}, RemoveTags: []string{"backend"}})
 	require.Error(t, err)
 	assert.Equal(t, 0, fake.updateCalls)
