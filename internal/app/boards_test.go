@@ -25,7 +25,7 @@ func TestResolveBoardChangeResolvesEligibleValuesAndDiffs(t *testing.T) {
 		{ID: "new", Name: "Platform", ProjectIDs: []string{"0-1"}},
 		{ID: "other", Name: "Elsewhere", ProjectIDs: []string{"other-project"}},
 	}
-	service := NewService(fake, fake, fake, fake, fake, fake, fake)
+	service := NewService(fake, fake, fake, fake, fake, fake, fake, fake)
 
 	change, err := service.resolveBoardChange(context.Background(), fake.issue, []string{"new", "platform", "new"}, false)
 	require.NoError(t, err)
@@ -40,7 +40,7 @@ func TestResolveBoardChangeRejectsUnsafeAndNoneCombinations(t *testing.T) {
 	fake := serviceFixture()
 	fake.issue.Fields = []domain.IssueField{boardField(domain.Board{ID: "a", Name: "Duplicate"})}
 	fake.boards = []domain.Board{{ID: "b", Name: "Duplicate", ProjectIDs: []string{"0-1"}}}
-	service := NewService(fake, fake, fake, fake, fake, fake, fake)
+	service := NewService(fake, fake, fake, fake, fake, fake, fake, fake)
 
 	_, err := service.resolveBoardChange(context.Background(), fake.issue, []string{"@none", "Duplicate"}, false)
 	assert.Equal(t, ErrorValidation, KindOf(err))
@@ -52,7 +52,7 @@ func TestBoardSetNoopAndEditOrder(t *testing.T) {
 	fake := serviceFixture()
 	fake.issue.Fields = []domain.IssueField{boardField(domain.Board{ID: "old", Name: "Legacy"})}
 	fake.boards = []domain.Board{{ID: "new", Name: "Platform", ProjectIDs: []string{"0-1"}}}
-	service := NewService(fake, fake, fake, fake, fake, fake, fake)
+	service := NewService(fake, fake, fake, fake, fake, fake, fake, fake)
 
 	_, err := service.SetField(context.Background(), "TT-1", "Board", []string{"old"})
 	require.NoError(t, err)
@@ -72,7 +72,7 @@ func TestBoardSetNoopAndEditOrder(t *testing.T) {
 func TestEditIssueBoardResolutionPreventsNormalMutation(t *testing.T) {
 	fake := serviceFixture()
 	fake.boards = []domain.Board{{ID: "new", Name: "Platform", ProjectIDs: []string{"0-1"}}}
-	service := NewService(fake, fake, fake, fake, fake, fake, fake)
+	service := NewService(fake, fake, fake, fake, fake, fake, fake, fake)
 	summary := "New"
 	_, err := service.EditIssue(context.Background(), "TT-1", EditRequest{Summary: &summary, Fields: []FieldInput{{Name: "Board", Value: "missing"}}})
 	require.Error(t, err)

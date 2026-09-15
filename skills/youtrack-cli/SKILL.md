@@ -10,6 +10,7 @@ description: Use when working with YouTrack issues from a coding agent; drives t
 
 ```bash
 youtrack auth status
+youtrack issue search 'project: APP #Unresolved' --limit 20 --json
 youtrack issue view TT-123 --json
 youtrack issue field list TT-123 --json
 ```
@@ -29,13 +30,15 @@ Do not guess command flags, custom-field names, enum/state/version values, or us
 - Treat `Board` as a reserved multi-value field: inspect it first, use board IDs/names only, and remember that set replaces the full membership set.
 - Do not invent sprint syntax. YouTrack selects the board's current/default sprint.
 - A mixed normal-field and Board edit validates first but is not transactionally atomic if Board command execution later fails.
+- Quote the single `issue search` query, use YouTrack's server-side search rather than local filtering, and preserve explicit server sorting.
+- Prefer a bounded `--limit` for discovery; reserve `--all` for necessary full scans.
 
 ## Core commands
 
 | Area | Commands |
 | --- | --- |
 | Auth | `auth login`, `auth logout`, `auth status` |
-| Issue | `issue view`, `issue edit`, `issue move` |
+| Issue | `issue search`, `issue view`, `issue edit`, `issue move` |
 | Fields | `issue field list/get/set/clear` |
 | Tags | `issue tag list/add/remove` |
 | API | `api <endpoint>` |

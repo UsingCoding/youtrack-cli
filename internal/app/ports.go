@@ -31,6 +31,21 @@ type IssueStore interface {
 	RemoveIssueTag(context.Context, domain.IssueRef, domain.Tag) error
 }
 
+type PageRequest struct {
+	Offset int
+	Limit  *int
+	All    bool
+}
+
+type Page struct {
+	Offset int
+	Limit  int
+}
+
+type IssueSearchStore interface {
+	SearchIssues(context.Context, string, Page) ([]domain.IssueSummary, error)
+}
+
 type ProjectFieldStore interface {
 	ListProjectFields(context.Context, string) ([]domain.FieldDefinition, error)
 	ListFieldOptions(context.Context, string, domain.FieldDefinition) ([]domain.FieldOption, error)
