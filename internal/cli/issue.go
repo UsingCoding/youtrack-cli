@@ -13,7 +13,7 @@ import (
 
 func issueCommand(deps Dependencies) *appcli.Command {
 	return &appcli.Command{Name: "issue", Usage: "inspect and edit issues", Commands: []*appcli.Command{
-		issueViewCommand(deps), issueSearchCommand(deps), issueEditCommand(deps), issueMoveCommand(deps), issueFieldCommand(deps), issueTagCommand(deps),
+		issueViewCommand(deps), issueSearchCommand(deps), issueCommentCommand(deps), issueEditCommand(deps), issueMoveCommand(deps), issueFieldCommand(deps), issueTagCommand(deps),
 	}}
 }
 

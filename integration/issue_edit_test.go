@@ -129,7 +129,7 @@ func (h *editHarness) service(t *testing.T) *app.Service {
 	t.Helper()
 	client, err := youtrack.NewClient(youtrack.Options{BaseURL: h.server.URL, HTTPClient: h.server.Client(), Token: "secret"})
 	require.NoError(t, err)
-	return app.NewService(client, client, client, client, client, client, client, client, client)
+	return app.NewService(client, client, client, client, client, client, client, client, client, client)
 }
 
 func TestCombinedIssueEditResolvesThenUsesOneMutation(t *testing.T) {

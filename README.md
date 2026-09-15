@@ -2,11 +2,11 @@
 
 A Go CLI for JetBrains YouTrack, inspired by the entity-oriented structure and agent-friendly workflows of [`teamcity-cli`](https://github.com/jetbrains/teamcity-cli).
 
-MVP1 focuses on safe issue inspection and mutation: custom fields, tags, summary/description changes, and project moves. MVP2 issue search and read-only saved-search view are implemented; the remaining MVP2 epics are not yet documented as available.
+MVP1 focuses on safe issue inspection and mutation: custom fields, tags, summary/description changes, and project moves. MVP2 issue search, read-only saved-search view, and comment management are implemented; issue creation and release verification remain unavailable.
 
 ## Status
 
-MVP1 implementation plus MVP2 issue search and read-only saved-search view. The implementation specification is split across [`spec/mvp1`](spec/mvp1/00-overview.md) and [`spec/mvp2`](spec/mvp2/00-overview.md).
+MVP1 implementation plus MVP2 issue search, read-only saved-search view, and comment management. The implementation specification is split across [`spec/mvp1`](spec/mvp1/00-overview.md) and [`spec/mvp2`](spec/mvp2/00-overview.md).
 
 ## Install for development
 
@@ -74,6 +74,17 @@ youtrack saved-search view 'Release blockers' --all
 ```
 
 `saved-search view` runs the visible server-side saved query. Result flags page its matching issues; the command is view-only.
+
+## Comments
+
+```bash
+youtrack issue comment list TT-123 --limit 20 --json
+youtrack issue comment add TT-123 --text 'Short update'
+youtrack issue comment add TT-123 --file ./comment.md
+youtrack issue comment remove TT-123 4-17
+```
+
+Comment lists use bounded pagination by default (50); use `--all` only for a complete scan. Prefer `--file` for substantial multiline text because its bytes are preserved exactly. Removal is a reversible soft removal (`deleted=true`), not permanent deletion. Comment editing, restore, permanent delete, attachments, visibility, reactions, and pinning are unsupported.
 
 ## Custom fields
 

@@ -80,6 +80,12 @@ type BoardStore interface {
 	ApplyIssueBoardChange(context.Context, string, []domain.Board, []domain.Board) error
 }
 
+type CommentStore interface {
+	ListComments(context.Context, domain.IssueRef, Page) ([]domain.Comment, error)
+	CreateComment(context.Context, domain.IssueRef, string) (domain.Comment, error)
+	SoftRemoveComment(context.Context, domain.IssueRef, string) error
+}
+
 type RawResponse struct {
 	StatusCode int
 	Header     http.Header

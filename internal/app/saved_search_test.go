@@ -40,7 +40,7 @@ func (f *savedSearchStoreFake) ListSavedSearches(_ context.Context, page Page) (
 }
 
 func savedSearchService(saved *savedSearchStoreFake, issues *searchStoreFake) *Service {
-	return NewService(nil, issues, saved, nil, nil, nil, nil, nil, nil)
+	return NewService(nil, issues, saved, nil, nil, nil, nil, nil, nil, nil)
 }
 
 func TestViewSavedSearchUsesDirectLookupAndStoredQuery(t *testing.T) {

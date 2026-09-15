@@ -50,3 +50,14 @@ youtrack issue view TT-123 --json
 ```
 
 Moving is intentionally separate because the set of available custom fields can change with the project.
+
+## Comment workflow
+
+```bash
+youtrack issue comment list APP-123 --limit 20 --json
+youtrack issue comment add APP-123 --file ./comment.md
+youtrack issue comment remove APP-123 4-17
+youtrack issue comment list APP-123 --limit 20 --json
+```
+
+List first to obtain the server comment ID. Use a file for multiline text. Re-list after adding or removing when verification matters; removal is reversible soft removal.

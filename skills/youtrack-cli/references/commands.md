@@ -3,6 +3,10 @@
 ```bash
 youtrack issue search <query> [--limit <n>] [--offset <n>] [--all]
 youtrack saved-search view <saved-search> [--limit <n>] [--offset <n>] [--all]
+youtrack issue comment list <issue> [--limit <n>] [--offset <n>] [--all]
+youtrack issue comment add <issue> (--text <text> | --file <path>)
+youtrack issue comment remove <issue> <comment-entity-id>
+
 
 youtrack issue view <issue> [--json|--plain]
 
@@ -36,6 +40,8 @@ youtrack issue search -- '-State: Done project: APP'
 Use `--json` for structured result consumption. Global flags work from nested commands.
 
 `saved-search view` accepts one database ID or quoted visible name. It resolves the visible server-side saved query, then pages matching issues with the same defaults and validation as `issue search`: offset `0`, limit `50`, a positive explicit `--limit`, non-negative `--offset`, and no explicit `--limit` with `--all`. Use `--json` for the saved-search metadata and issue summaries, or `--plain` for matching issue lines only. The command is view-only; structured saved-search create, update, delete, and sharing operations are unavailable.
+
+`issue comment list` uses the same pagination rules as `issue search`: default limit 50, non-negative offset, positive explicit limit, and no explicit `--limit` with `--all`. It includes visible soft-removed comments. `issue comment add` requires exactly one source selected with `--text` or `--file`; both preserve supplied bytes, and blank/whitespace-only text is rejected. Prefer `--file` for substantial multiline content. `issue comment remove` performs reversible soft removal only. Comment edit, restore, permanent delete, attachments, visibility, reactions, and pinning are unsupported. Use `--json` for stable comment objects, `--plain` for IDs (and no bytes on successful removal), or human output for readable blocks.
 
 `Board` is available through the field commands and `--field Board=...`. Board set is exact-set replacement; values are board IDs or names, not sprint syntax.
 
