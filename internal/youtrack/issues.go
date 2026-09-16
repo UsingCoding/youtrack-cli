@@ -61,6 +61,41 @@ func (c *Client) UpdateIssue(ctx context.Context, ref domain.IssueRef, patch app
 	return c.doJSON(ctx, http.MethodPost, "/api/issues/"+string(ref), nil, payload, nil)
 }
 
+func (c *Client) CreateIssue(ctx context.Context, create app.IssueCreate) (domain.Issue, error) {
+	payload := map[string]any{
+		"project": map[string]string{"id": create.Project.ID},
+		"summary": create.Summary,
+	}
+	if create.Description != nil {
+		payload["description"] = *create.Description
+	}
+	if len(create.Fields) > 0 {
+		fields := make([]any, 0, len(create.Fields))
+		for _, assignment := range create.Fields {
+			field, err := serializeCreateAssignment(assignment)
+			if err != nil {
+				return domain.Issue{}, err
+			}
+			fields = append(fields, field)
+		}
+		payload["customFields"] = fields
+	}
+	if len(create.Tags) > 0 {
+		tags := make([]map[string]string, 0, len(create.Tags))
+		for _, tag := range create.Tags {
+			tags = append(tags, map[string]string{"id": tag.ID})
+		}
+		payload["tags"] = tags
+	}
+
+	var data dto.Issue
+	q := url.Values{"fields": []string{issueFields}}
+	if err := c.doJSON(ctx, http.MethodPost, "/api/issues", q, payload, &data); err != nil {
+		return domain.Issue{}, err
+	}
+	return mapIssue(data)
+}
+
 func (c *Client) MoveIssue(ctx context.Context, ref domain.IssueRef, projectID string) (domain.Issue, error) {
 	path := "/api/issues/" + string(ref) + "/project"
 	if err := c.doJSON(ctx, http.MethodPost, path, nil, map[string]string{"id": projectID}, nil); err != nil {
@@ -227,6 +262,21 @@ func serializeAssignment(a app.FieldAssignment) (map[string]any, error) {
 		return nil, err
 	}
 	return map[string]any{"id": a.Field.ID, "$type": typeName, "value": value}, nil
+}
+
+func serializeCreateAssignment(a app.FieldAssignment) (map[string]any, error) {
+	if _, ok := a.Value.(domain.StateTransitionValue); ok {
+		return nil, app.Validationf("state transitions cannot be used when creating an issue")
+	}
+	typeName, err := issueTypeFor(a.Field)
+	if err != nil {
+		return nil, err
+	}
+	value, err := serializeValue(a.Field, a.Value)
+	if err != nil {
+		return nil, err
+	}
+	return map[string]any{"name": a.Field.Name, "$type": typeName, "value": value}, nil
 }
 
 func issueTypeFor(def domain.FieldDefinition) (string, error) {

@@ -55,6 +55,64 @@ func TestUpdateIssueSerializesResolvedFieldsAndTagsInOneRequest(t *testing.T) {
 	assert.Equal(t, "tag-1", tags[0].(map[string]any)["id"])
 }
 
+func TestCreateIssueSendsOneNameBasedRequestAndMapsResponse(t *testing.T) {
+	var calls int
+	var payload map[string]any
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		calls++
+		assert.Equal(t, http.MethodPost, r.Method)
+		assert.Equal(t, "/api/issues", r.URL.Path)
+		assert.Equal(t, issueFields, r.URL.Query().Get("fields"))
+		require.NoError(t, json.NewDecoder(r.Body).Decode(&payload))
+		_, _ = w.Write([]byte(`{"id":"2-1","idReadable":"TT-1","summary":"New","description":"first\nsecond","created":1,"updated":2,"project":{"id":"0-1","name":"Tools","shortName":"TT"},"tags":[{"id":"tag-1","name":"backend"}],"customFields":[{"id":"pf-1","name":"Priority","$type":"SingleEnumIssueCustomField","value":{"id":"priority-critical","name":"Critical"}}]}`))
+	}))
+	defer server.Close()
+
+	client, err := NewClient(Options{BaseURL: server.URL, HTTPClient: server.Client()})
+	require.NoError(t, err)
+	description := "first\nsecond"
+	issue, err := client.CreateIssue(context.Background(), app.IssueCreate{
+		Project: domain.Project{ID: "0-1"},
+		Summary: "New", Description: &description,
+		Fields: []app.FieldAssignment{{
+			Field: domain.FieldDefinition{Name: "Priority", Kind: domain.FieldEnum, Cardinality: domain.CardinalitySingle},
+			Value: domain.EntityValue{ID: "priority-critical", Name: "Critical"},
+		}},
+		Tags: []domain.Tag{{ID: "tag-1"}},
+	})
+
+	require.NoError(t, err)
+	assert.Equal(t, 1, calls)
+	assert.Equal(t, "0-1", payload["project"].(map[string]any)["id"])
+	assert.Equal(t, "New", payload["summary"])
+	assert.Equal(t, description, payload["description"])
+	fields := payload["customFields"].([]any)
+	field := fields[0].(map[string]any)
+	assert.Equal(t, "Priority", field["name"])
+	assert.NotContains(t, field, "id")
+	assert.Equal(t, "SingleEnumIssueCustomField", field["$type"])
+	assert.Equal(t, "priority-critical", field["value"].(map[string]any)["id"])
+	assert.Equal(t, "tag-1", payload["tags"].([]any)[0].(map[string]any)["id"])
+	assert.Equal(t, "TT-1", issue.IDReadable)
+	assert.Equal(t, domain.EntityValue{ID: "priority-critical", Name: "Critical"}, issue.Fields[0].Value)
+}
+
+func TestCreateIssueDoesNotRetryFailures(t *testing.T) {
+	calls := 0
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		calls++
+		http.Error(w, `{"error":"unavailable"}`, http.StatusServiceUnavailable)
+	}))
+	defer server.Close()
+
+	client, err := NewClient(Options{BaseURL: server.URL, HTTPClient: server.Client()})
+	require.NoError(t, err)
+	_, err = client.CreateIssue(context.Background(), app.IssueCreate{Project: domain.Project{ID: "0-1"}, Summary: "New"})
+
+	require.Error(t, err)
+	assert.Equal(t, 1, calls)
+}
+
 func TestGetIssueKeepsUnknownCustomFieldReadable(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")

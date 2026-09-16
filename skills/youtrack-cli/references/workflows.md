@@ -20,6 +20,20 @@ youtrack issue field list APP-123 --json
 
 Use an existing visible saved search when its server-side filter captures the intended work. Inspect server-ordered results; do not copy or recreate the filter locally.
 
+## Create then inspect
+
+```bash
+youtrack issue create APP \
+  --summary 'Describe the failure clearly' \
+  --description-file ./description.md \
+  --field Priority=Critical \
+  --tag backend \
+  --json
+youtrack issue view APP-123 --json
+```
+
+Choose the project deliberately and use known project field and tag values. Creation resolves all supplied values before one POST, but workflow defaults are server-controlled; inspect the returned issue or re-read it before work that depends on its state or Board membership.
+
 ## Safe issue update
 
 ```bash

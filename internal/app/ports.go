@@ -12,6 +12,26 @@ type FieldAssignment struct {
 	Value domain.FieldValue
 }
 
+type CreateIssueRequest struct {
+	Project     domain.ProjectRef
+	Summary     string
+	Description *string
+	Fields      []FieldInput
+	Tags        []string
+}
+
+type IssueCreate struct {
+	Project     domain.Project
+	Summary     string
+	Description *string
+	Fields      []FieldAssignment
+	Tags        []domain.Tag
+}
+
+type IssueCreator interface {
+	CreateIssue(context.Context, IssueCreate) (domain.Issue, error)
+}
+
 type IssuePatch struct {
 	Summary     *string
 	Description *string

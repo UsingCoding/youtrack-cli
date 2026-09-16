@@ -47,7 +47,7 @@ func buildRuntime(deps Dependencies, cmd *appcli.Command) (*runtime, error) {
 	}
 	return &runtime{
 		client:   client,
-		service:  app.NewService(client, client, client, client, client, client, client, client, client, client),
+		service:  app.NewService(client, client, client, client, client, client, client, client, client, client, client),
 		renderer: renderer, profile: resolved.Profile, url: resolved.URL,
 	}, nil
 }

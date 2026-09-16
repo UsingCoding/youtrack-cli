@@ -11,15 +11,17 @@ import (
 )
 
 type resolverFieldStore struct {
-	defs    []domain.FieldDefinition
-	options map[string][]domain.FieldOption
-	users   map[string][]domain.User
+	defs        []domain.FieldDefinition
+	options     map[string][]domain.FieldOption
+	users       map[string][]domain.User
+	optionCalls int
 }
 
 func (f *resolverFieldStore) ListProjectFields(context.Context, string) ([]domain.FieldDefinition, error) {
 	return f.defs, nil
 }
 func (f *resolverFieldStore) ListFieldOptions(_ context.Context, _ string, field domain.FieldDefinition) ([]domain.FieldOption, error) {
+	f.optionCalls++
 	return f.options[field.ID], nil
 }
 func (f *resolverFieldStore) ListFieldUsers(_ context.Context, _ string, field domain.FieldDefinition) ([]domain.User, error) {
@@ -145,4 +147,53 @@ func TestFieldResolverRejectsClearingStateMachineField(t *testing.T) {
 
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "cannot be cleared directly")
+}
+
+func TestFieldResolverResolveForProject(t *testing.T) {
+	resolver, issue := newResolverFixture()
+
+	priority, err := resolver.ResolveForProject(context.Background(), issue.Project, "Priority", []string{"Critical"})
+	require.NoError(t, err)
+	assert.Equal(t, domain.EntityValue{ID: "p-critical", Name: "Critical"}, priority.Value)
+
+	versions, err := resolver.ResolveForProject(context.Background(), issue.Project, "Fix versions", []string{"2026.2", "2026.3"})
+	require.NoError(t, err)
+	assert.Equal(t, domain.MultiValue{Values: []domain.FieldValue{
+		domain.EntityValue{ID: "v-2026-2", Name: "2026.2"},
+		domain.EntityValue{ID: "v-2026-3", Name: "2026.3"},
+	}}, versions.Value)
+
+	assignee, err := resolver.ResolveForProject(context.Background(), issue.Project, "Assignee", []string{"@me"})
+	require.NoError(t, err)
+	assert.Equal(t, domain.UserValue{ID: "u-1", Login: "john", FullName: "John Doe"}, assignee.Value)
+
+	group, err := resolver.ResolveForProject(context.Background(), issue.Project, "Team", []string{"Platform"})
+	require.NoError(t, err)
+	assert.Equal(t, domain.EntityValue{ID: "g-1", Name: "Platform"}, group.Value)
+
+	cleared, err := resolver.ResolveForProject(context.Background(), issue.Project, "Priority", []string{"@none"})
+	require.NoError(t, err)
+	assert.Equal(t, domain.EmptyValue{}, cleared.Value)
+}
+
+func TestFieldResolverResolveForProjectPreservesEmptyStringAndRejectsState(t *testing.T) {
+	fields := &resolverFieldStore{
+		defs: []domain.FieldDefinition{
+			{ID: "pf-title", Name: "Title", Kind: domain.FieldString, Cardinality: domain.CardinalitySingle},
+			{ID: "pf-state", Name: "State", Kind: domain.FieldState, Cardinality: domain.CardinalitySingle},
+		},
+		options: map[string][]domain.FieldOption{"pf-state": {{ID: "open", Name: "Open"}}},
+		users:   map[string][]domain.User{},
+	}
+	resolver := NewFieldResolver(fields, resolverUserStore{}, resolverGroupStore{})
+	project := domain.Project{ID: "0-1"}
+
+	title, err := resolver.ResolveForProject(context.Background(), project, "Title", []string{""})
+	require.NoError(t, err)
+	assert.Equal(t, domain.StringValue{Value: ""}, title.Value)
+
+	_, err = resolver.ResolveForProject(context.Background(), project, "State", []string{"Open"})
+	require.Error(t, err)
+	assert.Equal(t, ErrorValidation, KindOf(err))
+	assert.Zero(t, fields.optionCalls)
 }

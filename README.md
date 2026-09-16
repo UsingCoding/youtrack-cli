@@ -2,11 +2,11 @@
 
 A Go CLI for JetBrains YouTrack, inspired by the entity-oriented structure and agent-friendly workflows of [`teamcity-cli`](https://github.com/jetbrains/teamcity-cli).
 
-MVP1 focuses on safe issue inspection and mutation: custom fields, tags, summary/description changes, and project moves. MVP2 issue search, read-only saved-search view, and comment management are implemented; issue creation and release verification remain unavailable.
+MVP1 focuses on safe issue inspection and mutation: custom fields, tags, summary/description changes, and project moves. MVP2 issue search, read-only saved-search view, comment management, and issue creation are implemented; release verification remains unavailable.
 
 ## Status
 
-MVP1 implementation plus MVP2 issue search, read-only saved-search view, and comment management. The implementation specification is split across [`spec/mvp1`](spec/mvp1/00-overview.md) and [`spec/mvp2`](spec/mvp2/00-overview.md).
+MVP1 implementation plus MVP2 issue search, read-only saved-search view, comment management, and issue creation. The implementation specification is split across [`spec/mvp1`](spec/mvp1/00-overview.md) and [`spec/mvp2`](spec/mvp2/00-overview.md).
 
 ## Install for development
 
@@ -87,6 +87,22 @@ youtrack issue comment remove TT-123 4-17
 ```
 
 Comment lists use bounded pagination by default (50); use `--all` only for a complete scan. Prefer `--file` for substantial multiline text because its bytes are preserved exactly. Edit replaces only the selected comment text; it is distinct from reversible `deleted=true` removal. Restoration, permanent deletion, attachments, visibility, reactions, and pinning remain unsupported.
+
+## Issue creation
+
+```bash
+youtrack issue create APP \
+  --summary 'Login fails after token rotation' \
+  --description-file ./description.md \
+  --field Type=Bug \
+  --field 'Fix versions=2026.2' \
+  --field 'Fix versions=2026.3' \
+  --field Assignee=@me \
+  --tag backend \
+  --json
+```
+
+`issue create` resolves the project, fields, and tags before one `POST /api/issues`. `--description` and `--description-file` are mutually exclusive; supplied description bytes are preserved exactly. Each `--field` splits on its first `=`, so commas are literal, and repeat a multi-value field to supply all values. `Board` and every state field are unavailable during creation. The returned issue uses the existing full issue output contract.
 
 ## Custom fields
 

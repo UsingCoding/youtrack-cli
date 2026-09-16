@@ -66,7 +66,7 @@ func (f *commentStoreFake) SoftRemoveComment(_ context.Context, issue domain.Iss
 }
 
 func commentService(store *commentStoreFake) *Service {
-	return NewService(nil, nil, nil, nil, nil, nil, nil, nil, nil, store)
+	return NewService(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, store)
 }
 
 func testComment(id string, deleted bool) domain.Comment {
