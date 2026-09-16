@@ -12,6 +12,7 @@ youtrack
 │   └── comment
 │       ├── list
 │       ├── add
+│       ├── edit
 │       └── remove
 └── saved-search
     └── view
@@ -118,6 +119,21 @@ youtrack issue comment add <issue> (--text <text> | --file <path>)
 
 Exactly one text source is required and it must contain a non-whitespace character. No attachment or visibility flag is accepted.
 
+Edit a comment:
+
+```bash
+youtrack issue comment edit APP-123 4-17 --text 'Ready after all.'
+youtrack issue comment edit APP-123 4-17 --file ./revised-comment.md
+```
+
+Contract:
+
+```text
+youtrack issue comment edit <issue> <comment-entity-id> (--text <text> | --file <path>)
+```
+
+Exactly one replacement-text source is required and it must contain a non-whitespace character. The update sends only replacement text; it does not accept deletion, restoration, attachment, or visibility flags.
+
 Remove a comment:
 
 ```bash
@@ -188,7 +204,7 @@ Domain structs remain free of JSON tags. `internal/output` maps them to explicit
 
 #### Comments
 
-`issue comment list --json` returns an array. `issue comment add --json` returns one object of the same shape:
+`issue comment list --json` returns an array. `issue comment add --json` and `issue comment edit --json` return one object of the same shape:
 
 ```json
 {
@@ -226,7 +242,7 @@ Human output is terminal-oriented and not formatting-stable.
 - saved-search view: saved-search name, stored query, optional owner, then the issue table
 - issue create: existing full issue renderer
 - comment list: readable blocks containing comment ID, author, timestamps, deletion state, and text
-- comment add: one comment block
+- comment add and edit: one comment block
 - comment remove: concise soft-removal confirmation
 
 Multiline descriptions and comments are preserved in human output.
@@ -239,7 +255,7 @@ Plain output contains no ANSI or labels.
 - saved-search view: the same issue lines, with no metadata header
 - issue create: existing `<readable-id>\t<summary>` issue line
 - comment list: one comment entity ID per line
-- comment add: the created comment entity ID followed by a newline
+- comment add and edit: the returned comment entity ID followed by a newline
 - comment remove: no output on success
 
 Comment text is intentionally not placed in plain list output because embedded tabs and newlines would violate the one-record-per-line contract. Use JSON when comment content is needed by a script or agent.
@@ -261,6 +277,7 @@ youtrack issue create APP --summary 'Configured issue' \
   --tag backend \
   --json
 youtrack issue comment add APP-123 --text 'MVP2 acceptance comment' --json
+youtrack issue comment edit APP-123 4-17 --text 'MVP2 acceptance comment, revised' --json
 youtrack issue comment list APP-123 --all
 youtrack issue comment remove APP-123 4-17 --json
 ```

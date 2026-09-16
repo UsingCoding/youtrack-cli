@@ -74,7 +74,13 @@ Add sends only:
 {"text":"..."}
 ```
 
-and requests the same comment projection in the response.
+Edit sends only the same body to the specific-comment update resource:
+
+```json
+{"text":"..."}
+```
+
+Both requests use the comment projection in the response.
 
 Remove sends only:
 
@@ -110,7 +116,7 @@ Existing `APIError` and exit-code mappings remain. In addition:
 - invalid server-side search syntax remains an API/runtime error, not CLI usage error
 - a missing saved search or comment maps to not-found
 - duplicate saved-search name matches map to ambiguous reference
-- create/comment permission failures map through the existing 401/403 behavior
+- comment mutation permission failures map through the existing 401/403 behavior
 - error strings never include tokens, Authorization headers, or full sensitive request headers
 
 ## Official API references

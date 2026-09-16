@@ -14,7 +14,7 @@ MVP2 is additive to [`spec/mvp1`](../mvp1/00-overview.md). It keeps the existing
 - view a visible saved search and its current issue results
 - create an issue with project, summary, description, supported custom fields, and existing tags
 - list issue comments
-- add text comments
+- add and edit text comments
 - remove comments reversibly
 - stable JSON and shell-friendly plain output for every new command
 - updated embedded coding-agent skill
@@ -25,7 +25,7 @@ MVP2 is additive to [`spec/mvp1`](../mvp1/00-overview.md). It keeps the existing
 - parsing, validating, completing, or rewriting YouTrack search syntax in the CLI
 - issue deletion, drafts, bulk issue creation, or bulk mutation
 - attachments on issues or comments
-- comment editing, permanent deletion, restoration, visibility controls, reactions, or pinning
+- permanent deletion, restoration, visibility controls, reactions, or pinning
 - setting Board membership or a state field during issue creation
 - links, work items, votes, watchers, project mutation, user administration, or a TUI
 
@@ -41,10 +41,10 @@ The authenticated raw REST command remains the escape hatch for capabilities out
 6. Issue creation resolves the project, every supplied custom-field value, and every tag before its only mutation request.
 7. A valid issue creation uses one `POST /api/issues`; tags and custom fields are part of that request. No follow-up write is allowed.
 8. `Board` and state fields are rejected during creation because they cannot be safely represented with the pre-create information available to the CLI.
-9. Comment removal is a reversible soft removal using `deleted=true`, not permanent REST deletion.
-10. REST DTOs, `$type` values, and wire-level saved-query terminology remain inside `internal/youtrack`.
-11. JSON output is built from explicit compatibility-sensitive output DTOs.
-12. Tokens and Authorization headers are never printed or logged.
+9. Comment edits send only replacement text to the specific-comment update resource.
+10. Comment removal is a reversible soft removal using `deleted=true`, not permanent REST deletion.
+11. REST DTOs, `$type` values, and wire-level saved-query terminology remain inside `internal/youtrack`.
+12. JSON output is built from explicit compatibility-sensitive output DTOs.
 
 ## Definition of done
 
@@ -55,7 +55,7 @@ The authenticated raw REST command remains the escape hatch for capabilities out
 - invalid issue-create input performs zero mutation requests
 - valid issue creation performs exactly one mutation request with project, summary, description, fields, and tags in one body
 - comment listing handles pagination
-- comment add creates a text-only comment
+- comment add and edit send text-only updates
 - comment remove performs a soft removal and never calls HTTP `DELETE`
 - stable JSON output matches [`03-cli-contract.md`](03-cli-contract.md)
 - embedded skill documentation matches the implemented commands

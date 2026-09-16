@@ -1,4 +1,4 @@
-# Search, Issue Creation, and Comments
+# Search, Issue Creation, and Comment Management
 
 ## Direct issue search
 
@@ -90,8 +90,14 @@ Exactly one source is required: inline text or a file. The file's contents becom
 
 The request contains only `text`. YouTrack applies its normal visibility and workflow rules. MVP2 does not accept attachments or visibility flags.
 
+## Comment edit
+
+Exactly one replacement-text source is required: inline text or a file. The file's contents become the replacement text without Markdown rendering or normalization by the CLI. A value with no non-whitespace characters is invalid.
+
+The request contains only `text` and is sent to the specific-comment update resource. MVP2 does not read the comment first, retry the update, or accept deletion, restoration, attachment, or visibility inputs. YouTrack decides whether a soft-deleted or otherwise restricted comment may be edited; permission and state failures are ordinary API errors.
+
 ## Comment remove
 
 A comment reference is its database ID. Removal sets the comment's `deleted` property to `true` through the specific-comment update resource. This is the reversible removal supported by YouTrack.
 
-MVP2 never calls the permanent comment `DELETE` operation. It also does not expose restore or edit commands. Permission failures are ordinary API errors.
+MVP2 never calls the permanent comment `DELETE` operation. It also does not expose restore commands. Permission failures are ordinary API errors.

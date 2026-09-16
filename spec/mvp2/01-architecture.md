@@ -32,7 +32,7 @@ Add narrow interfaces in `internal/app/ports.go` instead of exposing the HTTP cl
 - an issue-search port that accepts an opaque query and page request and returns issue summaries
 - an issue-creation port that accepts a resolved project, summary, optional description, resolved field assignments, and resolved tags
 - a saved-search port that reads one search by database ID and paginates all visible searches for name resolution
-- a comment port that lists, creates, and soft-removes comments
+- a comment port that lists, creates, edits, and soft-removes comments
 
 The application layer owns these contracts. Adapter request and response DTOs remain private to `internal/youtrack`.
 
@@ -101,6 +101,15 @@ read exactly one text source
  -> reject blank text
  -> POST one text-only comment
  -> map and render the returned comment
+```
+
+Edit:
+
+```text
+read exactly one replacement-text source
+-> reject blank text and blank issue or comment references
+-> POST replacement text to the specific comment
+-> map and render the returned comment
 ```
 
 Remove:

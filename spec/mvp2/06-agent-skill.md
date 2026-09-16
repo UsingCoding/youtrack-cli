@@ -34,11 +34,12 @@ The skill teaches agents to:
 The skill teaches agents to:
 
 - use `issue comment list` before acting on a referenced comment ID
-- use `--file` for substantial multiline comments
+- use `--file` for substantial multiline comments or replacement text
 - use comments for useful issue context, not command logs or token-bearing data
+- understand that `comment edit` replaces only the text of the selected comment
 - understand that `comment remove` is reversible soft removal
 - never claim a comment was permanently deleted
-- never attempt comment attachments, edits, visibility changes, reactions, restoration, or pinning through MVP2 structured commands
+- never attempt comment attachments, visibility changes, reactions, restoration, or pinning through MVP2 structured commands
 
 ## Safety and output
 

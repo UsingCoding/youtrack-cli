@@ -61,6 +61,8 @@ Coverage includes:
 - add requires exactly one non-blank text source
 - file content is preserved
 - add serializes only `text` and is not retried
+- edit requires exactly one non-blank replacement-text source and preserves inline and file text
+- edit posts only `text` to the selected issue/comment resource and is not retried
 - remove posts only `deleted=true` to the selected issue/comment resource
 - remove never uses HTTP `DELETE`
 - not-found and permission errors retain existing exit-code semantics

@@ -30,8 +30,8 @@ The source contracts are:
 - [x] Epic 2 — Implement saved-search view end to end
 - [ ] Epic 3 — Implement issue creation end to end
 - [x] Epic 4 — Implement comment list/add/soft-remove end to end
-- [ ] Epic 5 — Complete cross-feature release verification
-
+- [ ] Epic 5 — Implement comment edit end to end
+- [ ] Epic 6 — Complete cross-feature release verification
 ## Epic 1 — Implement issue search end to end
 
 ### Product result
@@ -337,7 +337,7 @@ youtrack issue comment add APP-123 --file ./comment.md
 youtrack issue comment remove APP-123 4-17
 ```
 
-This is the complete MVP2 comment scope, not full REST CRUD. Comment editing, restoration, permanent deletion, attachments, visibility controls, reactions, and pinning remain excluded.
+This epic establishes list/add/soft-remove behavior. Comment editing follows as Epic 5; permanent deletion, restoration, attachments, visibility controls, reactions, and pinning remain excluded.
 
 ### Domain and application
 
@@ -420,11 +420,85 @@ Update README and all affected skill/reference files in the same epic. Teach age
 - focused and integration tests pass
 - README and embedded skill match the implementation
 
-## Epic 5 — Complete cross-feature release verification
+## Epic 5 — Implement comment edit end to end
 
 ### Product result
 
-MVP2 behaves as one compatible CLI release rather than four separately working feature slices.
+Users can replace the text of a selected comment:
+
+```bash
+youtrack issue comment edit APP-123 4-17 --text 'Ready after all.'
+youtrack issue comment edit APP-123 4-17 --file ./revised-comment.md
+```
+
+The update sends only replacement text to the specific-comment resource and returns the updated semantic comment. It does not restore a removed comment or expose full comment CRUD.
+
+### Domain and application
+
+1. Extend the app-owned `CommentStore` with an explicit edit method accepting an issue reference, comment entity ID, and replacement text, and returning `domain.Comment`.
+2. Implement `Service.EditComment`:
+   - require non-blank issue and comment references
+   - reject replacement text containing no non-whitespace characters
+   - pass the original non-blank text unchanged
+   - call the edit method exactly once
+   - do not list or read the comment first, retry, restore, or soft-remove it
+3. Keep `Comment` and the comment-output contract unchanged. An edit returns the same semantic shape as add and list.
+
+### YouTrack adapter
+
+1. Reuse Epic 4's private comment DTO and centralized comment projection.
+2. Implement `POST /api/issues/{issue}/comments/{commentID}` with a body containing only:
+
+   ```json
+   {"text":"..."}
+   ```
+
+3. Request the comment projection in the response and map nullable author, text, and updated timestamp without manufacturing values.
+4. Reuse existing transport and error mapping. Do not automatically retry the POST.
+5. Do not send `deleted`, call HTTP `DELETE`, or add a comment read before the update.
+
+### CLI and output
+
+1. Add `issue comment edit <issue> <comment-entity-id> (--text <text> | --file <path>)`.
+2. Require exactly one replacement-text source and preserve inline and file contents exactly.
+3. Reuse Epic 4's comment JSON DTO and renderer:
+   - human: one updated-comment block retaining multiline text
+   - JSON: one comment object with explicit nullable `author`, `text`, and `updated`
+   - plain: the returned comment entity ID followed by a newline
+4. Do not reuse the soft-removal result DTO or add flags for restoration, deletion, attachments, or visibility.
+
+### Tests
+
+Add focused coverage for:
+
+- missing or blank issue/comment references and blank replacement text rejected before HTTP
+- exactly one `--text` or `--file` source required
+- exact inline and file replacement-text preservation, including multiline content
+- selected issue/comment path, POST method, and body containing only `text`
+- response mapping, including nullable author, text, and updated timestamp
+- edit POST not retried
+- no preliminary list/read request, `deleted` field, or HTTP `DELETE`
+- not-found, permission, and state error mapping
+- multiline human output, stable JSON nullability, and exact plain bytes
+
+### Documentation and skill
+
+Update README and all affected skill/reference files in the same epic. Teach agents to list comments before choosing an ID, use `--file` for substantial replacement text, and distinguish text replacement from restoration or permanent deletion.
+
+### Complete when
+
+- the edit command is reachable through the built CLI
+- edit works through the real adapter and application layers
+- the update is proven to be one non-retried POST containing only `text`
+- JSON and plain contracts match `03-cli-contract.md`
+- focused and integration tests pass
+- README and embedded skill match the implementation
+
+## Epic 6 — Complete cross-feature release verification
+
+### Product result
+
+MVP2 behaves as one compatible CLI release rather than five separately working feature slices.
 
 ### Integration and acceptance
 
@@ -433,7 +507,7 @@ MVP2 behaves as one compatible CLI release rather than four separately working f
    - direct search, then issue inspection
    - saved-search view using the same issue-search path
    - create, then find the issue through search
-   - add/list/remove a comment on the created issue
+   - add, edit, list, and remove a comment on the created issue
 3. Exercise global flags from every new nested command.
 4. Exercise stable JSON and exact plain output across all features.
 5. Confirm validation errors perform no mutation requests.
