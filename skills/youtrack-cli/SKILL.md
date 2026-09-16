@@ -36,9 +36,9 @@ Do not guess command flags, custom-field names, enum/state/version values, or us
 - Prefer a bounded `--limit` for discovery; reserve `--all` for necessary full scans.
 - Use `saved-search view` with an existing visible saved search instead of recreating its server-side filter locally.
 - Saved searches are view-only: do not use structured create, update, delete, or sharing operations.
-- List comments before using a comment ID; prefer `--file` for substantial multiline comment text.
+- List comments before choosing a comment ID; use `--file` for substantial replacement text.
 - Do not put permanent tokens in command logs.
-- `issue comment remove` is reversible soft removal only; do not describe it as permanent deletion.
+- `issue comment edit` replaces text only; `issue comment remove` is reversible soft removal, not restoration or permanent deletion.
 
 ## Core commands
 
@@ -46,7 +46,7 @@ Do not guess command flags, custom-field names, enum/state/version values, or us
 | --- | --- |
 | Auth | `auth login`, `auth logout`, `auth status` |
 | Issue | `issue search`, `issue view`, `issue edit`, `issue move` |
-| Comments | `issue comment list/add/remove` |
+| Comments | `issue comment list/add/edit/remove` |
 | Fields | `issue field list/get/set/clear` |
 | Saved searches | `saved-search view` |
 | API | `api <endpoint>` |

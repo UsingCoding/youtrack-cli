@@ -94,6 +94,61 @@ func TestCreateCommentSendsOnlyTextAndDoesNotRetry(t *testing.T) {
 	assert.Equal(t, 1, calls)
 }
 
+func TestEditCommentSendsOnlyTextMapsNullableValuesAndDoesNotRetry(t *testing.T) {
+	calls := 0
+	text := "replacement line\n\twith whitespace\n"
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		calls++
+		require.Equal(t, http.MethodPost, r.Method)
+		require.Equal(t, "/api/issues/APP-123/comments/4-17", r.URL.Path)
+		assert.Equal(t, commentFields, r.URL.Query().Get("fields"))
+		assert.Len(t, r.URL.Query(), 1)
+		var body map[string]any
+		require.NoError(t, json.NewDecoder(r.Body).Decode(&body))
+		assert.Equal(t, map[string]any{"text": text}, body)
+		_, _ = w.Write([]byte(`{"id":"4-17","text":null,"author":null,"created":1700000000123,"updated":null,"deleted":false}`))
+	}))
+	defer server.Close()
+
+	got, err := commentClient(t, server).EditComment(context.Background(), "APP-123", "4-17", text)
+	require.NoError(t, err)
+	assert.Equal(t, domain.Comment{ID: "4-17", Created: time.UnixMilli(1700000000123)}, got)
+	assert.Equal(t, 1, calls)
+}
+
+func TestEditCommentMapsFailuresWithoutRetry(t *testing.T) {
+	for _, tc := range []struct {
+		name   string
+		status int
+		kind   app.ErrorKind
+	}{
+		{name: "service unavailable", status: http.StatusServiceUnavailable, kind: app.ErrorRuntime},
+		{name: "forbidden", status: http.StatusForbidden, kind: app.ErrorAuth},
+		{name: "not found", status: http.StatusNotFound, kind: app.ErrorNotFound},
+		{name: "conflict", status: http.StatusConflict, kind: app.ErrorRuntime},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			calls := 0
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				calls++
+				require.Equal(t, http.MethodPost, r.Method)
+				require.Equal(t, "/api/issues/APP-123/comments/4-17", r.URL.Path)
+				assert.Equal(t, commentFields, r.URL.Query().Get("fields"))
+				var body map[string]any
+				require.NoError(t, json.NewDecoder(r.Body).Decode(&body))
+				assert.Equal(t, map[string]any{"text": "replacement"}, body)
+				w.WriteHeader(tc.status)
+			}))
+			defer server.Close()
+
+			_, err := commentClient(t, server).EditComment(context.Background(), "APP-123", "4-17", "replacement")
+			require.Error(t, err)
+			assert.Equal(t, tc.kind, app.KindOf(err))
+			assert.Equal(t, 1, calls)
+		})
+	}
+}
+
 func TestSoftRemoveCommentPostsDeletedWithoutRetry(t *testing.T) {
 	calls := 0
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

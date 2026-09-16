@@ -83,6 +83,7 @@ type BoardStore interface {
 type CommentStore interface {
 	ListComments(context.Context, domain.IssueRef, Page) ([]domain.Comment, error)
 	CreateComment(context.Context, domain.IssueRef, string) (domain.Comment, error)
+	EditComment(context.Context, domain.IssueRef, string, string) (domain.Comment, error)
 	SoftRemoveComment(context.Context, domain.IssueRef, string) error
 }
 

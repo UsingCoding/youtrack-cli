@@ -52,6 +52,19 @@ func (s *Service) AddComment(ctx context.Context, issue domain.IssueRef, text st
 	return s.comments.CreateComment(ctx, issue, text)
 }
 
+func (s *Service) EditComment(ctx context.Context, issue domain.IssueRef, commentID, text string) (domain.Comment, error) {
+	if strings.TrimSpace(string(issue)) == "" {
+		return domain.Comment{}, Validationf("issue reference must not be blank")
+	}
+	if strings.TrimSpace(commentID) == "" {
+		return domain.Comment{}, Validationf("comment ID must not be blank")
+	}
+	if strings.TrimSpace(text) == "" {
+		return domain.Comment{}, Validationf("comment text must not be blank")
+	}
+	return s.comments.EditComment(ctx, issue, commentID, text)
+}
+
 func (s *Service) RemoveComment(ctx context.Context, issue domain.IssueRef, commentID string) error {
 	if strings.TrimSpace(string(issue)) == "" {
 		return Validationf("issue reference must not be blank")

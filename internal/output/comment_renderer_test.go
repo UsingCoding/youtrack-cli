@@ -41,6 +41,43 @@ func TestCommentRendererJSONUsesStableNullableShape(t *testing.T) {
 	assert.Equal(t, "[]\n", renderComments(t, FormatJSON, nil))
 }
 
+func TestCommentRendererEditResponseContract(t *testing.T) {
+	created := time.Date(2025, 2, 3, 4, 5, 0, 0, time.UTC)
+	updated := created.Add(time.Minute)
+	comment := domain.Comment{
+		ID:      "4-1",
+		Author:  &domain.User{Login: "ada"},
+		Text:    new("revised line one\nrevised line two"),
+		Created: created,
+		Updated: &updated,
+	}
+
+	human := &bytes.Buffer{}
+	renderer, err := New(human, false, false)
+	require.NoError(t, err)
+	require.NoError(t, renderer.Comment(comment))
+	for _, value := range []string{"ID: 4-1", "Author: ada", "Created:", "Updated:", "Deleted: false", "revised line one\nrevised line two"} {
+		assert.Contains(t, human.String(), value)
+	}
+
+	jsonOut := &bytes.Buffer{}
+	renderer, err = New(jsonOut, true, false)
+	require.NoError(t, err)
+	require.NoError(t, renderer.Comment(domain.Comment{ID: "4-1", Created: created}))
+	var object map[string]json.RawMessage
+	require.NoError(t, json.Unmarshal(jsonOut.Bytes(), &object))
+	assert.Equal(t, []string{"author", "created", "deleted", "entityId", "text", "updated"}, sortedKeys(object))
+	assert.JSONEq(t, `null`, string(object["author"]))
+	assert.JSONEq(t, `null`, string(object["text"]))
+	assert.JSONEq(t, `null`, string(object["updated"]))
+
+	plain := &bytes.Buffer{}
+	renderer, err = New(plain, false, true)
+	require.NoError(t, err)
+	require.NoError(t, renderer.Comment(comment))
+	assert.Equal(t, "4-1\n", plain.String())
+}
+
 func TestCommentRendererPlainAndRemovalBytes(t *testing.T) {
 	comments := []domain.Comment{{ID: "4-2"}, {ID: "4-1", Deleted: true}}
 	assert.Equal(t, "4-2\n4-1\n", renderComments(t, FormatPlain, comments))

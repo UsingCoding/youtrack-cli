@@ -58,6 +58,11 @@ func TestBuiltCLIComments(t *testing.T) {
 			}
 		case r.URL.Path == "/api/issues/APP-1/comments" && r.Method == http.MethodPost:
 			require.NoError(t, json.NewEncoder(w).Encode(map[string]any{"id": "4-created", "text": request.Body["text"], "author": nil, "created": 0, "updated": nil, "deleted": false}))
+		case r.URL.Path == "/api/issues/APP-1/comments/4-edit" && r.Method == http.MethodPost:
+			require.Equal(t, "id,text,author(id,login,fullName),created,updated,deleted", r.URL.Query().Get("fields"))
+			require.Len(t, r.URL.Query(), 1)
+			require.Equal(t, map[string]any{"text": "revised\n\tcomment\n"}, request.Body)
+			require.NoError(t, json.NewEncoder(w).Encode(map[string]any{"id": "4-edit", "text": request.Body["text"], "author": nil, "created": 0, "updated": nil, "deleted": false}))
 		case r.URL.Path == "/api/issues/APP-1/comments/4-remove" && r.Method == http.MethodPost:
 			w.WriteHeader(http.StatusNoContent)
 		default:
@@ -101,6 +106,17 @@ func TestBuiltCLIComments(t *testing.T) {
 	_, _, err = run("issue", "comment", "add", "APP-1", "--file", file, "--url", server.URL, "--token", "secret-token", "--plain")
 	require.NoError(t, err)
 
+	editText := "revised\n\tcomment\n"
+	stdout, _, err = run("issue", "comment", "edit", "APP-1", "4-edit", "--text", editText, "--url", server.URL, "--token", "secret-token", "--json")
+	require.NoError(t, err)
+	var edited map[string]any
+	require.NoError(t, json.Unmarshal(stdout, &edited))
+	assert.Equal(t, "4-edit", edited["entityId"])
+	assert.Equal(t, editText, edited["text"])
+	assert.Nil(t, edited["author"])
+	assert.Nil(t, edited["updated"])
+	assert.Equal(t, false, edited["deleted"])
+
 	stdout, _, err = run("issue", "comment", "remove", "APP-1", "4-remove", "--url", server.URL, "--token", "secret-token", "--json")
 	require.NoError(t, err)
 	assert.JSONEq(t, `{"entityId":"4-remove","removed":true}`, string(stdout))
@@ -127,11 +143,15 @@ func TestBuiltCLIComments(t *testing.T) {
 	mu.Lock()
 	defer mu.Unlock()
 	var addBodies []map[string]any
+	var edits []commentRequest
 	removes := 0
 	attempts503 := 0
 	for _, request := range requests {
 		if request.Path == "/api/issues/APP-1/comments" && request.Method == http.MethodPost {
 			addBodies = append(addBodies, request.Body)
+		}
+		if request.Path == "/api/issues/APP-1/comments/4-edit" {
+			edits = append(edits, request)
 		}
 		if request.Path == "/api/issues/APP-1/comments/4-remove" {
 			removes++
@@ -145,4 +165,5 @@ func TestBuiltCLIComments(t *testing.T) {
 	assert.Equal(t, 2, removes)
 	assert.Equal(t, 1, attempts503)
 	assert.Equal(t, []commentRequest{{Method: http.MethodGet, Path: "/api/issues/APP-1/comments", Skip: "0", Top: "50"}, {Method: http.MethodGet, Path: "/api/issues/APP-1/comments", Skip: "42", Top: "50"}, {Method: http.MethodGet, Path: "/api/issues/APP-1/comments", Skip: "43", Top: "50"}}, requests[:3])
+	assert.Equal(t, []commentRequest{{Method: http.MethodPost, Path: "/api/issues/APP-1/comments/4-edit", Body: map[string]any{"text": editText}}}, edits)
 }

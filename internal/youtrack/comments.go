@@ -11,7 +11,7 @@ import (
 	"github.com/UsingCoding/youtrack-cli/internal/youtrack/dto"
 )
 
-type commentCreateRequest struct {
+type commentTextRequest struct {
 	Text string `json:"text"`
 }
 
@@ -39,7 +39,16 @@ func (c *Client) ListComments(ctx context.Context, issue domain.IssueRef, page a
 func (c *Client) CreateComment(ctx context.Context, issue domain.IssueRef, text string) (domain.Comment, error) {
 	var data dto.Comment
 	path := "/api/issues/" + string(issue) + "/comments"
-	if err := c.doJSON(ctx, http.MethodPost, path, url.Values{"fields": []string{commentFields}}, commentCreateRequest{Text: text}, &data); err != nil {
+	if err := c.doJSON(ctx, http.MethodPost, path, url.Values{"fields": []string{commentFields}}, commentTextRequest{Text: text}, &data); err != nil {
+		return domain.Comment{}, err
+	}
+	return mapComment(data), nil
+}
+
+func (c *Client) EditComment(ctx context.Context, issue domain.IssueRef, commentID, text string) (domain.Comment, error) {
+	var data dto.Comment
+	path := "/api/issues/" + string(issue) + "/comments/" + commentID
+	if err := c.doJSON(ctx, http.MethodPost, path, url.Values{"fields": []string{commentFields}}, commentTextRequest{Text: text}, &data); err != nil {
 		return domain.Comment{}, err
 	}
 	return mapComment(data), nil

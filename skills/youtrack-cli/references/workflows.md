@@ -56,8 +56,9 @@ Moving is intentionally separate because the set of available custom fields can 
 ```bash
 youtrack issue comment list APP-123 --limit 20 --json
 youtrack issue comment add APP-123 --file ./comment.md
+youtrack issue comment edit APP-123 4-17 --file ./revised-comment.md
 youtrack issue comment remove APP-123 4-17
 youtrack issue comment list APP-123 --limit 20 --json
 ```
 
-List first to obtain the server comment ID. Use a file for multiline text. Re-list after adding or removing when verification matters; removal is reversible soft removal.
+List first to obtain the server comment ID. Use a file for multiline text. Editing replaces text only; it does not restore a removed comment. Re-list after adding, editing, or removing when verification matters; removal is reversible soft removal.

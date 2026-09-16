@@ -30,7 +30,7 @@ The source contracts are:
 - [x] Epic 2 — Implement saved-search view end to end
 - [ ] Epic 3 — Implement issue creation end to end
 - [x] Epic 4 — Implement comment list/add/soft-remove end to end
-- [ ] Epic 5 — Implement comment edit end to end
+- [x] Epic 5 — Implement comment edit end to end
 - [ ] Epic 6 — Complete cross-feature release verification
 ## Epic 1 — Implement issue search end to end
 

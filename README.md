@@ -81,10 +81,12 @@ youtrack saved-search view 'Release blockers' --all
 youtrack issue comment list TT-123 --limit 20 --json
 youtrack issue comment add TT-123 --text 'Short update'
 youtrack issue comment add TT-123 --file ./comment.md
+youtrack issue comment edit TT-123 4-17 --text 'Revised update'
+youtrack issue comment edit TT-123 4-17 --file ./revised-comment.md
 youtrack issue comment remove TT-123 4-17
 ```
 
-Comment lists use bounded pagination by default (50); use `--all` only for a complete scan. Prefer `--file` for substantial multiline text because its bytes are preserved exactly. Removal is a reversible soft removal (`deleted=true`), not permanent deletion. Comment editing, restore, permanent delete, attachments, visibility, reactions, and pinning are unsupported.
+Comment lists use bounded pagination by default (50); use `--all` only for a complete scan. Prefer `--file` for substantial multiline text because its bytes are preserved exactly. Edit replaces only the selected comment text; it is distinct from reversible `deleted=true` removal. Restoration, permanent deletion, attachments, visibility, reactions, and pinning remain unsupported.
 
 ## Custom fields
 

@@ -83,6 +83,80 @@ func TestIssueCommentAddPreservesInlineAndFileBytes(t *testing.T) {
 	}
 }
 
+func TestIssueCommentEditPreservesInlineAndFileBytes(t *testing.T) {
+	fileText := "from file\n\twith whitespace\n"
+	path := filepath.Join(t.TempDir(), "comment.txt")
+	require.NoError(t, os.WriteFile(path, []byte(fileText), 0o600))
+	for _, tc := range []struct {
+		name, text string
+		args       []string
+	}{
+		{"inline JSON", "  inline\n\ttext  ", []string{"youtrack", "issue", "comment", "edit", "APP-1", "4-1", "--text", "  inline\n\ttext  ", "--url", "SERVER", "--token", "secret", "--json"}},
+		{"file plain", fileText, []string{"youtrack", "issue", "comment", "edit", "APP-1", "4-1", "--file", path, "--url", "SERVER", "--token", "secret", "--plain"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			calls := 0
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				calls++
+				require.Equal(t, http.MethodPost, r.Method)
+				require.Equal(t, "/api/issues/APP-1/comments/4-1", r.URL.Path)
+				var body map[string]string
+				require.NoError(t, json.NewDecoder(r.Body).Decode(&body))
+				assert.Equal(t, map[string]string{"text": tc.text}, body)
+				_, _ = w.Write([]byte(`{"id":"4-1","text":null,"author":null,"created":0,"updated":null,"deleted":false}`))
+			}))
+			defer server.Close()
+
+			out := &bytes.Buffer{}
+			require.NoError(t, commentRoot(out, server).Run(context.Background(), replaceServer(tc.args, server.URL)))
+			assert.Equal(t, 1, calls)
+			if tc.name == "inline JSON" {
+				var response map[string]json.RawMessage
+				require.NoError(t, json.Unmarshal(out.Bytes(), &response))
+				assert.Len(t, response, 6)
+				assert.JSONEq(t, `"4-1"`, string(response["entityId"]))
+				assert.JSONEq(t, `false`, string(response["deleted"]))
+				assert.NotEmpty(t, response["created"])
+				assert.JSONEq(t, `null`, string(response["author"]))
+				assert.JSONEq(t, `null`, string(response["text"]))
+				assert.JSONEq(t, `null`, string(response["updated"]))
+			} else {
+				assert.Equal(t, "4-1\n", out.String())
+			}
+		})
+	}
+}
+
+func TestIssueCommentEditValidatesLocally(t *testing.T) {
+	cases := []struct {
+		name string
+		args []string
+		want string
+	}{
+		{"missing arguments", []string{"youtrack", "issue", "comment", "edit"}, "usage: youtrack issue comment edit <issue> <comment-entity-id> (--text <text> | --file <path>)"},
+		{"extra argument", []string{"youtrack", "issue", "comment", "edit", "APP-1", "4-1", "extra", "--text", "x"}, "usage: youtrack issue comment edit <issue> <comment-entity-id> (--text <text> | --file <path>)"},
+		{"blank issue", []string{"youtrack", "issue", "comment", "edit", " ", "4-1", "--text", "x"}, "issue reference must not be blank"},
+		{"blank comment ID", []string{"youtrack", "issue", "comment", "edit", "APP-1", " ", "--text", "x"}, "comment ID must not be blank"},
+		{"no source", []string{"youtrack", "issue", "comment", "edit", "APP-1", "4-1"}, "exactly one of --text or --file is required"},
+		{"both sources", []string{"youtrack", "issue", "comment", "edit", "APP-1", "4-1", "--text", "x", "--file", "x"}, "exactly one of --text or --file is required"},
+		{"blank text", []string{"youtrack", "issue", "comment", "edit", "APP-1", "4-1", "--text", " \t"}, "comment text must not be blank"},
+		{"missing file", []string{"youtrack", "issue", "comment", "edit", "APP-1", "4-1", "--file", "/missing/comment"}, "open /missing/comment"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			calls := 0
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { calls++ }))
+			defer server.Close()
+			err := commentRoot(&bytes.Buffer{}, server).Run(context.Background(), tc.args)
+			require.Error(t, err)
+			if tc.name != "missing file" {
+				assert.Equal(t, app.ErrorValidation, app.KindOf(err))
+			}
+			assert.Contains(t, err.Error(), tc.want)
+			assert.Zero(t, calls)
+		})
+	}
+}
 func TestIssueCommentCommandsValidateLocallyAndRemoveDispatches(t *testing.T) {
 	cases := []struct {
 		name string
