@@ -81,8 +81,59 @@ func (r *FieldResolver) Resolve(ctx context.Context, issue domain.Issue, ref dom
 	return FieldAssignment{Field: def, Value: parsed[0]}, nil
 }
 
+func (r *FieldResolver) ResolveForProject(ctx context.Context, project domain.Project, ref domain.FieldRef, values []string) (FieldAssignment, error) {
+	defs, err := r.Definitions(ctx, project.ID)
+	if err != nil {
+		return FieldAssignment{}, err
+	}
+	def, err := resolveDefinition(defs, string(ref))
+	if err != nil {
+		return FieldAssignment{}, err
+	}
+	if def.Kind == domain.FieldState {
+		return FieldAssignment{}, Validationf("state field %q cannot be set when creating an issue", def.Name)
+	}
+	if len(values) == 1 && values[0] == "@none" {
+		if !def.CanBeEmpty {
+			return FieldAssignment{}, Validationf("field %q cannot be empty", def.Name)
+		}
+		return FieldAssignment{Field: def, Value: domain.EmptyValue{}}, nil
+	}
+	if def.Cardinality == domain.CardinalitySingle && len(values) != 1 {
+		return FieldAssignment{}, Validationf("field %q is single-valued and expects exactly one value", def.Name)
+	}
+	if def.Cardinality == domain.CardinalityMulti && len(values) == 0 {
+		return FieldAssignment{}, Validationf("field %q expects at least one value", def.Name)
+	}
+
+	parsed := make([]domain.FieldValue, 0, len(values))
+	for _, input := range values {
+		v, err := r.resolveProjectValue(ctx, project.ID, def, input)
+		if err != nil {
+			return FieldAssignment{}, err
+		}
+		parsed = append(parsed, v)
+	}
+	if def.Cardinality == domain.CardinalityMulti {
+		return FieldAssignment{Field: def, Value: domain.MultiValue{Values: parsed}}, nil
+	}
+	return FieldAssignment{Field: def, Value: parsed[0]}, nil
+}
+
 func (r *FieldResolver) resolveOne(ctx context.Context, issue domain.Issue, def domain.FieldDefinition, input string) (domain.FieldValue, error) {
-	projectID := issue.Project.ID
+	if def.Kind == domain.FieldState {
+		if issueField, ok := findIssueField(issue, def); ok && issueField.StateMachine {
+			event, err := resolveOption(issueField.Transitions, input, def.Name+" transition")
+			if err != nil {
+				return nil, err
+			}
+			return domain.StateTransitionValue{ID: event.ID, Presentation: event.Name}, nil
+		}
+	}
+	return r.resolveProjectValue(ctx, issue.Project.ID, def, input)
+}
+
+func (r *FieldResolver) resolveProjectValue(ctx context.Context, projectID string, def domain.FieldDefinition, input string) (domain.FieldValue, error) {
 	switch def.Kind {
 	case domain.FieldString:
 		return domain.StringValue{Value: input}, nil
@@ -118,24 +169,7 @@ func (r *FieldResolver) resolveOne(ctx context.Context, issue domain.Issue, def 
 			return nil, Validationf("field %q expects a period using h/m (for example 1h30m): %q", def.Name, input)
 		}
 		return domain.PeriodValue{Minutes: minutes}, nil
-	case domain.FieldState:
-		if issueField, ok := findIssueField(issue, def); ok && issueField.StateMachine {
-			event, err := resolveOption(issueField.Transitions, input, def.Name+" transition")
-			if err != nil {
-				return nil, err
-			}
-			return domain.StateTransitionValue{ID: event.ID, Presentation: event.Name}, nil
-		}
-		options, err := r.optionsFor(ctx, projectID, def)
-		if err != nil {
-			return nil, err
-		}
-		opt, err := resolveOption(options, input, def.Name)
-		if err != nil {
-			return nil, err
-		}
-		return domain.EntityValue(opt), nil
-	case domain.FieldEnum, domain.FieldVersion, domain.FieldBuild, domain.FieldOwned:
+	case domain.FieldState, domain.FieldEnum, domain.FieldVersion, domain.FieldBuild, domain.FieldOwned:
 		options, err := r.optionsFor(ctx, projectID, def)
 		if err != nil {
 			return nil, err

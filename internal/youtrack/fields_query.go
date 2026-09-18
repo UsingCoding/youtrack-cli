@@ -1,6 +1,8 @@
 package youtrack
 
 const issueFields = "id,idReadable,summary,description,created,updated,resolved,project(id,name,shortName),reporter(id,login,fullName),updater(id,login,fullName),tags(id,name),customFields(id,name,$type,value(id,name,login,fullName,minutes,presentation,text,markdownText,isResolved),possibleEvents(id,presentation))"
+const issueSummaryFields = "id,idReadable,summary,project(id,name,shortName),created,updated,resolved"
+const savedQueryFields = "id,name,query,owner(id,login,fullName)"
 const projectFields = "id,name,shortName"
 const projectCustomFieldFields = "id,$type,canBeEmpty,field(id,name,fieldType(id,valueType,isMultiValue)),bundle(id)"
 const bundleValueFields = "id,name,archived"
@@ -10,3 +12,4 @@ const groupFields = "id,name"
 const issueSprintFields = "id,agile(id,name)"
 const boardFields = "id,name,projects(id)"
 const commandValidationFields = "commands(error,description,delete)"
+const commentFields = "id,text,author(id,login,fullName),created,updated,deleted"

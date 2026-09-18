@@ -2,11 +2,11 @@
 
 A Go CLI for JetBrains YouTrack, inspired by the entity-oriented structure and agent-friendly workflows of [`teamcity-cli`](https://github.com/jetbrains/teamcity-cli).
 
-MVP1 focuses on safe issue inspection and mutation: custom fields, tags, summary/description changes, and project moves.
+MVP1 focuses on safe issue inspection and mutation: custom fields, tags, summary/description changes, and project moves. MVP2 adds issue search, read-only saved-search view, comment management, and issue creation; its release verification is complete.
 
 ## Status
 
-MVP1 implementation. The implementation specification is split across [`spec/mvp1`](spec/mvp1/00-overview.md).
+MVP1 implementation plus MVP2 issue search, read-only saved-search view, comment management, issue creation, and release verification. The implementation specification is split across [`spec/mvp1`](spec/mvp1/00-overview.md) and [`spec/mvp2`](spec/mvp2/00-overview.md).
 
 ## Install for development
 
@@ -52,6 +52,57 @@ youtrack issue view TT-123 --json
 youtrack issue field list TT-123
 youtrack issue field get TT-123 Priority --plain
 ```
+
+## Issue search
+
+```bash
+youtrack issue search 'project: APP'
+youtrack issue search 'project: APP #Unresolved sort by: updated desc' --limit 20
+youtrack issue search 'project: APP' --offset 100 --limit 50
+youtrack issue search 'project: APP' --all
+youtrack issue search 'project: APP #Unresolved' --json
+```
+
+YouTrack performs filtering and sorting; the CLI preserves the quoted query and any explicit sort clause. Prefer bounded discovery with `--limit`; reserve `--all` for a genuinely complete collection.
+
+## Saved searches
+
+```bash
+youtrack saved-search view 'Assigned to me'
+youtrack saved-search view 51-33 --limit 20
+youtrack saved-search view 'Release blockers' --all
+```
+
+`saved-search view` runs the visible server-side saved query. Result flags page its matching issues; the command is view-only.
+
+## Comments
+
+```bash
+youtrack issue comment list TT-123 --limit 20 --json
+youtrack issue comment add TT-123 --text 'Short update'
+youtrack issue comment add TT-123 --file ./comment.md
+youtrack issue comment edit TT-123 4-17 --text 'Revised update'
+youtrack issue comment edit TT-123 4-17 --file ./revised-comment.md
+youtrack issue comment remove TT-123 4-17
+```
+
+Comment lists use bounded pagination by default (50); use `--all` only for a complete scan. Prefer `--file` for substantial multiline text because its bytes are preserved exactly. Edit replaces only the selected comment text; it is distinct from reversible `deleted=true` removal. Restoration, permanent deletion, attachments, visibility, reactions, and pinning remain unsupported.
+
+## Issue creation
+
+```bash
+youtrack issue create APP \
+  --summary 'Login fails after token rotation' \
+  --description-file ./description.md \
+  --field Type=Bug \
+  --field 'Fix versions=2026.2' \
+  --field 'Fix versions=2026.3' \
+  --field Assignee=@me \
+  --tag backend \
+  --json
+```
+
+`issue create` resolves the project, fields, and tags before one `POST /api/issues`. `--description` and `--description-file` are mutually exclusive; supplied description bytes are preserved exactly. Each `--field` splits on its first `=`, so commas are literal, and repeat a multi-value field to supply all values. `Board` and every state field are unavailable during creation. The returned issue uses the existing full issue output contract.
 
 ## Custom fields
 

@@ -13,7 +13,7 @@ import (
 
 func issueCommand(deps Dependencies) *appcli.Command {
 	return &appcli.Command{Name: "issue", Usage: "inspect and edit issues", Commands: []*appcli.Command{
-		issueViewCommand(deps), issueEditCommand(deps), issueMoveCommand(deps), issueFieldCommand(deps), issueTagCommand(deps),
+		issueViewCommand(deps), issueSearchCommand(deps), issueCreateCommand(deps), issueCommentCommand(deps), issueEditCommand(deps), issueMoveCommand(deps), issueFieldCommand(deps), issueTagCommand(deps),
 	}}
 }
 
@@ -33,6 +33,96 @@ func issueViewCommand(deps Dependencies) *appcli.Command {
 		}
 		return rt.renderer.Issue(issue)
 	}}
+}
+
+func issueSearchCommand(deps Dependencies) *appcli.Command {
+	return &appcli.Command{
+		Name: "search", Usage: "search issues with a YouTrack query", ArgsUsage: "<query>", Flags: paginationFlags(),
+		Action: func(ctx context.Context, cmd *appcli.Command) error {
+			args := cmd.Args().Slice()
+			if err := requireArgs(args, 1, 1, "youtrack issue search <query> [--limit <n>] [--offset <n>] [--all]"); err != nil {
+				return err
+			}
+			if strings.TrimSpace(args[0]) == "" {
+				return app.Validationf("search query must not be blank")
+			}
+			request, err := pageRequest(cmd)
+			if err != nil {
+				return err
+			}
+			rt, err := buildRuntime(deps, cmd)
+			if err != nil {
+				return err
+			}
+			items, err := rt.service.SearchIssues(ctx, args[0], request)
+			if err != nil {
+				return err
+			}
+			return rt.renderer.IssueSummaries(items)
+		},
+	}
+}
+
+func issueCreateCommand(deps Dependencies) *appcli.Command {
+	return &appcli.Command{
+		Name: "create", Usage: "create an issue", ArgsUsage: "<project>",
+		DisableSliceFlagSeparator: true,
+		Flags: []appcli.Flag{
+			&appcli.StringFlag{Name: "summary"},
+			&appcli.StringFlag{Name: "description"},
+			&appcli.StringFlag{Name: "description-file"},
+			&appcli.StringSliceFlag{Name: "field", Usage: "issue field assignment NAME=VALUE; repeat for multi-value fields"},
+			&appcli.StringSliceFlag{Name: "tag", Usage: "tag to apply"},
+		},
+		Action: func(ctx context.Context, cmd *appcli.Command) error {
+			args := cmd.Args().Slice()
+			if err := requireArgs(args, 1, 1, "youtrack issue create <project> --summary <text> [flags]"); err != nil {
+				return err
+			}
+			if !cmd.IsSet("summary") || strings.TrimSpace(cmd.String("summary")) == "" {
+				return app.Validationf("--summary is required and cannot be blank")
+			}
+			if cmd.IsSet("description") && cmd.IsSet("description-file") {
+				return app.Validationf("--description and --description-file are mutually exclusive")
+			}
+
+			var description *string
+			if cmd.IsSet("description") {
+				value := cmd.String("description")
+				description = &value
+			}
+			if cmd.IsSet("description-file") {
+				data, err := os.ReadFile(cmd.String("description-file"))
+				if err != nil {
+					return err
+				}
+				value := string(data)
+				description = &value
+			}
+
+			fields := make([]app.FieldInput, 0, len(cmd.StringSlice("field")))
+			for _, raw := range cmd.StringSlice("field") {
+				name, value, ok := strings.Cut(raw, "=")
+				if !ok {
+					return app.Validationf("invalid --field %q: expected NAME=VALUE", raw)
+				}
+				fields = append(fields, app.FieldInput{Name: name, Value: value})
+			}
+
+			rt, err := buildRuntime(deps, cmd)
+			if err != nil {
+				return err
+			}
+			issue, err := rt.service.CreateIssue(ctx, app.CreateIssueRequest{
+				Project: domain.ProjectRef(args[0]), Summary: cmd.String("summary"), Description: description,
+				Fields: fields, Tags: cmd.StringSlice("tag"),
+			})
+			if err != nil {
+				return err
+			}
+			return rt.renderer.Issue(issue)
+		},
+	}
 }
 
 func issueEditCommand(deps Dependencies) *appcli.Command {

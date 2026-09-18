@@ -16,3 +16,13 @@ type Issue struct {
 	Fields      []IssueField
 	Tags        []Tag
 }
+
+type IssueSummary struct {
+	ID         string
+	IDReadable string
+	Summary    string
+	Project    Project
+	Created    time.Time
+	Updated    time.Time
+	Resolved   *time.Time
+}

@@ -12,6 +12,26 @@ type FieldAssignment struct {
 	Value domain.FieldValue
 }
 
+type CreateIssueRequest struct {
+	Project     domain.ProjectRef
+	Summary     string
+	Description *string
+	Fields      []FieldInput
+	Tags        []string
+}
+
+type IssueCreate struct {
+	Project     domain.Project
+	Summary     string
+	Description *string
+	Fields      []FieldAssignment
+	Tags        []domain.Tag
+}
+
+type IssueCreator interface {
+	CreateIssue(context.Context, IssueCreate) (domain.Issue, error)
+}
+
 type IssuePatch struct {
 	Summary     *string
 	Description *string
@@ -29,6 +49,26 @@ type IssueStore interface {
 	MoveIssue(context.Context, domain.IssueRef, string) (domain.Issue, error)
 	AddIssueTag(context.Context, domain.IssueRef, domain.Tag) error
 	RemoveIssueTag(context.Context, domain.IssueRef, domain.Tag) error
+}
+
+type PageRequest struct {
+	Offset int
+	Limit  *int
+	All    bool
+}
+
+type Page struct {
+	Offset int
+	Limit  int
+}
+
+type IssueSearchStore interface {
+	SearchIssues(context.Context, string, Page) ([]domain.IssueSummary, error)
+}
+
+type SavedSearchStore interface {
+	GetSavedSearch(context.Context, string) (domain.SavedSearch, error)
+	ListSavedSearches(context.Context, Page) ([]domain.SavedSearch, error)
 }
 
 type ProjectFieldStore interface {
@@ -58,6 +98,13 @@ type BoardStore interface {
 	ListBoards(context.Context) ([]domain.Board, error)
 	ValidateIssueBoardChange(context.Context, string, []domain.Board, []domain.Board) error
 	ApplyIssueBoardChange(context.Context, string, []domain.Board, []domain.Board) error
+}
+
+type CommentStore interface {
+	ListComments(context.Context, domain.IssueRef, Page) ([]domain.Comment, error)
+	CreateComment(context.Context, domain.IssueRef, string) (domain.Comment, error)
+	EditComment(context.Context, domain.IssueRef, string, string) (domain.Comment, error)
+	SoftRemoveComment(context.Context, domain.IssueRef, string) error
 }
 
 type RawResponse struct {
