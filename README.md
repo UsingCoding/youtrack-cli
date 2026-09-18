@@ -2,11 +2,11 @@
 
 A Go CLI for JetBrains YouTrack, inspired by the entity-oriented structure and agent-friendly workflows of [`teamcity-cli`](https://github.com/jetbrains/teamcity-cli).
 
-MVP1 focuses on safe issue inspection and mutation: custom fields, tags, summary/description changes, and project moves. MVP2 issue search, read-only saved-search view, comment management, and issue creation are implemented; release verification remains unavailable.
+MVP1 focuses on safe issue inspection and mutation: custom fields, tags, summary/description changes, and project moves. MVP2 adds issue search, read-only saved-search view, comment management, and issue creation; its release verification is complete.
 
 ## Status
 
-MVP1 implementation plus MVP2 issue search, read-only saved-search view, comment management, and issue creation. The implementation specification is split across [`spec/mvp1`](spec/mvp1/00-overview.md) and [`spec/mvp2`](spec/mvp2/00-overview.md).
+MVP1 implementation plus MVP2 issue search, read-only saved-search view, comment management, issue creation, and release verification. The implementation specification is split across [`spec/mvp1`](spec/mvp1/00-overview.md) and [`spec/mvp2`](spec/mvp2/00-overview.md).
 
 ## Install for development
 

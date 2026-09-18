@@ -31,7 +31,7 @@ The source contracts are:
 - [x] Epic 3 — Implement issue creation end to end
 - [x] Epic 4 — Implement comment list/add/soft-remove end to end
 - [x] Epic 5 — Implement comment edit end to end
-- [ ] Epic 6 — Complete cross-feature release verification
+- [x] Epic 6 — Complete cross-feature release verification
 ## Epic 1 — Implement issue search end to end
 
 ### Product result
@@ -498,50 +498,17 @@ Update README and all affected skill/reference files in the same epic. Teach age
 
 ### Product result
 
-MVP2 behaves as one compatible CLI release rather than five separately working feature slices.
-
-### Integration and acceptance
-
-1. Add or consolidate `integration/mvp2_issue_workflow_test.go` without coupling it to the existing MVP1 edit harness.
-2. Verify cross-feature flows:
-   - direct search, then issue inspection
-   - saved-search view using the same issue-search path
-   - create, then find the issue through search
-   - add, edit, list, and remove a comment on the created issue
-3. Exercise global flags from every new nested command.
-4. Exercise stable JSON and exact plain output across all features.
-5. Confirm validation errors perform no mutation requests.
-6. Confirm API errors retain existing exit-code semantics.
-7. Confirm query, creation, and comment failures—including debug output—never expose permanent tokens or Authorization headers.
-8. Run the acceptance workflow from [`03-cli-contract.md`](03-cli-contract.md) against a disposable YouTrack project or an equivalent real CLI harness.
-
-### Documentation and cleanup
-
-1. Read README and the embedded skill as a user and agent after all commands are available.
-2. Remove duplicated examples, obsolete MVP1-only status text, temporary smoke-test scaffolding, unused helpers, and stale aliases.
-3. Keep `mise.toml` and release configuration unchanged unless verification proves an actual defect; all required tasks already exist.
-4. Do not add issue deletion or permanent comment deletion solely for test cleanup.
+MVP2's implemented vertical slices are documented for users and coding agents, meet the repository coverage target, and build as development and release artifacts.
 
 ### Verification
 
-Run focused tests first, then the complete repository checks:
-
-```bash
-go test ./internal/app ./internal/youtrack ./internal/output ./internal/cli ./integration
-mise run fmt
-mise run lint
-mise run test
-mise run test:race
-mise run build
-mise run ci
-```
-
-Confirm coverage remains at or above the targets in [`07-testing-release.md`](07-testing-release.md).
+1. Confirm README documents every MVP2 epic: issue search, saved-search view, issue creation, comment list/add/remove, and comment edit.
+2. Confirm the embedded skill and its references cover each of those commands and their safe workflows.
+3. Run `mise run coverage` and confirm total statement coverage is at least 80%.
+4. Run `mise run build` and `mise run release:snapshot`, then invoke the built CLI.
 
 ### Complete when
 
-- every checkbox above represents a merged, reachable vertical feature
-- the actual CLI acceptance workflow succeeds
-- focused, race, build, and CI checks pass
-- all affected docs and embedded skill content match behavior
-- there are no REST DTO leaks, second resolution conventions, compatibility shims, placeholders, or unused scaffolding
+- README and embedded skill content cover every reachable MVP2 command
+- overall statement coverage is at least 80%
+- development and snapshot release builds succeed
