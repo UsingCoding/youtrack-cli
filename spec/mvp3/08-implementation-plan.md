@@ -12,7 +12,7 @@ Each merged implementation slice must contain reachable behavior, not dormant po
 
 ## Epic checklist
 
-- [ ] Epic 1 — Issue spent time CRUD and type discovery
+- [x] Epic 1 — Issue spent time CRUD and type discovery
 - [ ] Epic 2 — Directed and undirected issue relationships
 - [ ] Epic 3 — Browser handoff and URL-only workflows
 - [ ] Release — Cross-feature compatibility and documentation verification
