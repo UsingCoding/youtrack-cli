@@ -76,3 +76,16 @@ youtrack issue comment list APP-123 --limit 20 --json
 ```
 
 List first to obtain the server comment ID. Use a file for multiline text. Editing replaces text only; it does not restore a removed comment. Re-list after adding, editing, or removing when verification matters; removal is reversible soft removal.
+
+## Work-item lifecycle
+
+```bash
+youtrack issue time types APP-123 --all --json
+youtrack issue time list APP-123 --limit 20 --json
+youtrack issue time add APP-123 --duration 1h30m --date 2026-09-29 --type Development --file ./work-note.md --json
+youtrack issue time view APP-123 115-7 --json
+youtrack issue time edit APP-123 115-7 --duration 2h --text '' --clear-type --author alice --json
+youtrack issue time remove APP-123 115-7 --yes
+```
+
+Discover types in the issue project, then list to obtain database work-item IDs. Use calendar dates and positive `h`/`m` durations. Inspect returned values after add/edit when server workflows or attribution matter. Removal is permanent. If a mutation request fails or its result is uncertain, do not retry blindly; inspect first because the server may have accepted it.

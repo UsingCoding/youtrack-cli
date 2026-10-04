@@ -89,7 +89,7 @@ func createServiceFixture(creator *createIssueCreatorFake, calls *[]string) *Ser
 		"BACKEND": {{ID: "backend-id", Name: "backend"}},
 		"missing": nil,
 	}, calls: calls}
-	return NewService(nil, creator, nil, nil, fields, createProjectStoreFake{project: domain.Project{ID: "0-1", Name: "App", ShortName: "APP"}, calls: calls}, tags, createUserStoreFake{}, createGroupStoreFake{}, nil, nil)
+	return NewService(nil, creator, nil, nil, fields, createProjectStoreFake{project: domain.Project{ID: "0-1", Name: "App", ShortName: "APP"}, calls: calls}, tags, createUserStoreFake{}, createGroupStoreFake{}, nil, nil, nil, nil, nil)
 }
 
 func TestCreateIssueResolvesInputsBeforeOneCreatorCall(t *testing.T) {

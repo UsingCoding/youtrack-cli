@@ -479,4 +479,10 @@ func TestFieldResolverReportsAmbiguousPeopleGroupsAndOverflowPeriod(t *testing.T
 		require.Error(t, err)
 		assert.Equal(t, ErrorValidation, KindOf(err))
 	})
+	t.Run("hour conversion overflow", func(t *testing.T) {
+		fields := &resolverFieldStore{defs: []domain.FieldDefinition{{ID: "period", Name: "Period", Kind: domain.FieldPeriod, Cardinality: domain.CardinalitySingle}}, options: map[string][]domain.FieldOption{}, users: map[string][]domain.User{}}
+		_, err := NewFieldResolver(fields, resolverUserStore{}, resolverGroupStore{}).Resolve(context.Background(), domain.Issue{Project: domain.Project{ID: "0-1"}}, "Period", []string{"153722867280912931h"}, false)
+		require.Error(t, err)
+		assert.Equal(t, ErrorValidation, KindOf(err))
+	})
 }

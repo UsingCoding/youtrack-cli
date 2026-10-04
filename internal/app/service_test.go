@@ -153,7 +153,7 @@ func serviceFixture() *serviceFake {
 
 func TestEditIssueValidatesEverythingBeforeMutation(t *testing.T) {
 	fake := serviceFixture()
-	service := NewService(fake, nil, fake, nil, fake, fake, fake, fake, fake, fake, nil)
+	service := NewService(fake, nil, fake, nil, fake, fake, fake, fake, fake, fake, nil, nil, nil, nil)
 	newSummary := "New"
 
 	_, err := service.EditIssue(context.Background(), "TT-1", EditRequest{
@@ -168,7 +168,7 @@ func TestEditIssueValidatesEverythingBeforeMutation(t *testing.T) {
 
 func TestEditIssueUsesOneCombinedMutation(t *testing.T) {
 	fake := serviceFixture()
-	service := NewService(fake, nil, fake, nil, fake, fake, fake, fake, fake, fake, nil)
+	service := NewService(fake, nil, fake, nil, fake, fake, fake, fake, fake, fake, nil, nil, nil, nil)
 	newSummary := "New"
 
 	got, err := service.EditIssue(context.Background(), "TT-1", EditRequest{
@@ -187,14 +187,14 @@ func TestEditIssueUsesOneCombinedMutation(t *testing.T) {
 
 func TestEditIssueRejectsTagConflictBeforeMutation(t *testing.T) {
 	fake := serviceFixture()
-	service := NewService(fake, nil, fake, nil, fake, fake, fake, fake, fake, fake, nil)
+	service := NewService(fake, nil, fake, nil, fake, fake, fake, fake, fake, fake, nil, nil, nil, nil)
 	_, err := service.EditIssue(context.Background(), "TT-1", EditRequest{AddTags: []string{"Backend"}, RemoveTags: []string{"backend"}})
 	require.Error(t, err)
 	assert.Equal(t, 0, fake.updateCalls)
 }
 
 func newService(fake *serviceFake) *Service {
-	return NewService(fake, nil, fake, nil, fake, fake, fake, fake, fake, fake, nil)
+	return NewService(fake, nil, fake, nil, fake, fake, fake, fake, fake, fake, nil, nil, nil, nil)
 }
 
 func TestServiceEnrichesFieldsFromDefinitionNameAndID(t *testing.T) {

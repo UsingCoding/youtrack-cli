@@ -21,6 +21,11 @@ func TestMetadataEndpointsMapAndPaginate(t *testing.T) {
 		case "/api/users/me":
 			assert.Equal(t, userFields, r.URL.Query().Get("fields"))
 			_, _ = w.Write([]byte(`{"id":"u-1","login":"alice","fullName":"Alice"}`))
+		case "/api/users":
+			assert.Equal(t, userFields, r.URL.Query().Get("fields"))
+			assert.Equal(t, "42", r.URL.Query().Get("$skip"))
+			assert.Equal(t, "1", r.URL.Query().Get("$top"))
+			_, _ = w.Write([]byte(`[{"id":"u-2","login":"bob","fullName":"Bob"}]`))
 		case "/api/tags":
 			assert.Equal(t, "back", r.URL.Query().Get("query"))
 			tagSkips = append(tagSkips, r.URL.Query().Get("$skip"))
@@ -47,12 +52,15 @@ func TestMetadataEndpointsMapAndPaginate(t *testing.T) {
 
 	me, err := client.Me(context.Background())
 	require.NoError(t, err)
+	users, err := client.ListUsers(context.Background(), app.Page{Offset: 42, Limit: 1})
+	require.NoError(t, err)
 	tags, err := client.SearchTags(context.Background(), "back")
 	require.NoError(t, err)
 	groups, err := client.SearchGroups(context.Background(), "plat")
 	require.NoError(t, err)
 
 	assert.Equal(t, domain.User{ID: "u-1", Login: "alice", FullName: "Alice"}, me)
+	assert.Equal(t, []domain.User{{ID: "u-2", Login: "bob", FullName: "Bob"}}, users)
 	assert.Equal(t, []domain.Tag{{ID: "t-1", Name: "backend"}}, tags)
 	assert.Equal(t, []domain.Group{{ID: "g-1", Name: "Platform"}}, groups)
 	assert.Equal(t, []string{"0", "1"}, tagSkips)

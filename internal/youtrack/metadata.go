@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"strconv"
 
+	"github.com/UsingCoding/youtrack-cli/internal/app"
 	"github.com/UsingCoding/youtrack-cli/internal/domain"
 	"github.com/UsingCoding/youtrack-cli/internal/youtrack/dto"
 )
@@ -17,6 +18,23 @@ func (c *Client) Me(ctx context.Context) (domain.User, error) {
 		return domain.User{}, err
 	}
 	return domain.User{ID: u.ID, Login: u.Login, FullName: u.FullName}, nil
+}
+
+func (c *Client) ListUsers(ctx context.Context, page app.Page) ([]domain.User, error) {
+	var data []dto.User
+	params := url.Values{
+		"fields": []string{userFields},
+		"$skip":  []string{itoa(page.Offset)},
+		"$top":   []string{itoa(page.Limit)},
+	}
+	if err := c.doJSON(ctx, http.MethodGet, "/api/users", params, nil, &data); err != nil {
+		return nil, err
+	}
+	items := make([]domain.User, 0, len(data))
+	for _, item := range data {
+		items = append(items, domain.User{ID: item.ID, Login: item.Login, FullName: item.FullName})
+	}
+	return items, nil
 }
 
 func (c *Client) SearchTags(ctx context.Context, query string) ([]domain.Tag, error) {

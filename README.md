@@ -6,7 +6,7 @@ MVP1 focuses on safe issue inspection and mutation: custom fields, tags, summary
 
 ## Status
 
-MVP1 implementation plus MVP2 issue search, read-only saved-search view, comment management, issue creation, and release verification. The implementation specification is split across [`spec/mvp1`](spec/mvp1/00-overview.md) and [`spec/mvp2`](spec/mvp2/00-overview.md).
+MVP1 implementation plus MVP2 issue search, read-only saved-search view, comment management, issue creation, and release verification. MVP3 Epic 1 spent-time management is delivered. The implementation specification is split across [`spec/mvp1`](spec/mvp1/00-overview.md), [`spec/mvp2`](spec/mvp2/00-overview.md), and [`spec/mvp3`](spec/mvp3/00-overview.md).
 
 ## Install for development
 
@@ -87,6 +87,32 @@ youtrack issue comment remove TT-123 4-17
 ```
 
 Comment lists use bounded pagination by default (50); use `--all` only for a complete scan. Prefer `--file` for substantial multiline text because its bytes are preserved exactly. Edit replaces only the selected comment text; it is distinct from reversible `deleted=true` removal. Restoration, permanent deletion, attachments, visibility, reactions, and pinning remain unsupported.
+
+
+## Issue time
+
+```text
+youtrack issue time types <issue> [--limit <n>] [--offset <n>] [--all]
+youtrack issue time list <issue> [--limit <n>] [--offset <n>] [--all]
+youtrack issue time view <issue> <work-item-id>
+youtrack issue time add <issue> --duration <period> --date <YYYY-MM-DD>
+  [--text <text> | --file <path>] [--type <type>] [--author <user>]
+youtrack issue time edit <issue> <work-item-id>
+  [--duration <period>] [--date <YYYY-MM-DD>]
+  [--text <text> | --file <path>] [--type <type> | --clear-type] [--author <user>]
+youtrack issue time remove <issue> <work-item-id> --yes
+```
+
+```bash
+youtrack issue time types TT-123 --all --json
+youtrack issue time list TT-123 --limit 20 --json
+youtrack issue time view TT-123 115-7 --json
+youtrack issue time add TT-123 --duration 1h30m --date 2026-09-29 --type Development --text 'Implement token refresh'
+youtrack issue time edit TT-123 115-7 --duration 2h --text '' --clear-type --author alice
+youtrack issue time remove TT-123 115-7 --yes
+```
+
+`types` and `list` accept `[--limit <positive-n>] [--offset <non-negative-n>] [--all]`; defaults are 50/0 and `--all` conflicts with an explicit limit. `types` discovers the selected issue project's types. `view` uses a work-item database ID. `--duration` is a required add value and a replacement edit value; use a positive integer `h`/`m` period such as `45m`, `2h`, or `1h30m`. `--date` is a required add value and a replacement edit value in `YYYY-MM-DD`. `--text` and `--file` are mutually exclusive and preserve exact bytes, including empty text. `--type` resolves a project-scoped type; `--clear-type` explicitly clears it and conflicts with `--type`. `--author` resolves an ID, login, or `@me`; `creator` is server-managed. Add/edit replace a work item value; they never increment a total custom field. `remove --yes` is a mandatory acknowledgement for permanent deletion.
 
 ## Issue creation
 

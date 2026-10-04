@@ -368,11 +368,17 @@ func parsePeriod(input string) (int64, error) {
 		if err != nil {
 			return 0, err
 		}
+		minutes := n
 		if ch == 'h' {
-			total += n * 60
-		} else {
-			total += n
+			if n > int64(^uint64(0)>>1)/60 {
+				return 0, fmt.Errorf("overflow")
+			}
+			minutes = n * 60
 		}
+		if total > int64(^uint64(0)>>1)-minutes {
+			return 0, fmt.Errorf("overflow")
+		}
+		total += minutes
 		number.Reset()
 		seenUnit = true
 	}
