@@ -8,12 +8,13 @@ import (
 	appcli "github.com/urfave/cli/v3"
 
 	"github.com/UsingCoding/youtrack-cli/internal/app"
+	"github.com/UsingCoding/youtrack-cli/internal/browser"
 	"github.com/UsingCoding/youtrack-cli/internal/domain"
 )
 
 func issueCommand(deps Dependencies) *appcli.Command {
 	return &appcli.Command{Name: "issue", Usage: "inspect and edit issues", Commands: []*appcli.Command{
-		issueViewCommand(deps), issueSearchCommand(deps), issueCreateCommand(deps), issueCommentCommand(deps), issueTimeCommand(deps), issueLinkCommand(deps), issueEditCommand(deps), issueMoveCommand(deps), issueFieldCommand(deps), issueTagCommand(deps),
+		issueViewCommand(deps), issueOpenCommand(deps), issueSearchCommand(deps), issueCreateCommand(deps), issueCommentCommand(deps), issueTimeCommand(deps), issueLinkCommand(deps), issueEditCommand(deps), issueMoveCommand(deps), issueFieldCommand(deps), issueTagCommand(deps),
 	}}
 }
 
@@ -35,16 +36,67 @@ func issueViewCommand(deps Dependencies) *appcli.Command {
 	}}
 }
 
+func issueOpenCommand(deps Dependencies) *appcli.Command {
+	return &appcli.Command{Name: "open", Usage: "open an issue in a browser", ArgsUsage: "<issue>", Flags: []appcli.Flag{
+		&appcli.BoolFlag{Name: "print-url", Usage: "print the destination without opening a browser"},
+	}, Action: func(ctx context.Context, cmd *appcli.Command) error {
+		args := cmd.Args().Slice()
+		if err := requireArgs(args, 1, 1, "youtrack issue open <issue>"); err != nil {
+			return err
+		}
+		if strings.TrimSpace(args[0]) == "" {
+			return app.Validationf("issue reference must not be blank")
+		}
+		rt, err := buildRuntime(deps, cmd)
+		if err != nil {
+			return err
+		}
+		identity, err := rt.service.ResolveIssueIdentity(ctx, domain.IssueRef(args[0]))
+		if err != nil {
+			return err
+		}
+		url, err := browser.BuildIssueURL(rt.url, identity.IDReadable)
+		if err != nil {
+			return err
+		}
+		return openURL(deps, rt.renderer, url, cmd.Bool("print-url"))
+	}}
+}
+
 func issueSearchCommand(deps Dependencies) *appcli.Command {
 	return &appcli.Command{
-		Name: "search", Usage: "search issues with a YouTrack query", ArgsUsage: "<query>", Flags: paginationFlags(),
+		Name: "search", Usage: "search issues with a YouTrack query", ArgsUsage: "<query> [open]", Flags: append(paginationFlags(),
+			&appcli.BoolFlag{Name: "print-url", Usage: "print the destination without opening a browser"},
+		),
 		Action: func(ctx context.Context, cmd *appcli.Command) error {
 			args := cmd.Args().Slice()
-			if err := requireArgs(args, 1, 1, "youtrack issue search <query> [--limit <n>] [--offset <n>] [--all]"); err != nil {
+			if err := requireArgs(args, 1, 2, "youtrack issue search <query> [open] [--limit <n>] [--offset <n>] [--all]"); err != nil {
 				return err
 			}
 			if strings.TrimSpace(args[0]) == "" {
 				return app.Validationf("search query must not be blank")
+			}
+			if len(args) == 2 {
+				if args[1] != "open" {
+					return app.Validationf("usage: youtrack issue search <query> [open] [--limit <n>] [--offset <n>] [--all]")
+				}
+				for _, name := range []string{"limit", "offset", "all"} {
+					if cmd.IsSet(name) {
+						return app.Validationf("--%s is not supported when opening a browser search", name)
+					}
+				}
+				rt, err := buildURLRuntime(deps, cmd)
+				if err != nil {
+					return err
+				}
+				url, err := browser.BuildSearchURL(rt.url, args[0])
+				if err != nil {
+					return err
+				}
+				return openURL(deps, rt.renderer, url, cmd.Bool("print-url"))
+			}
+			if cmd.IsSet("print-url") {
+				return app.Validationf("--print-url requires the open suffix")
 			}
 			request, err := pageRequest(cmd)
 			if err != nil {

@@ -11,7 +11,9 @@ description: Use when working with YouTrack issues, visible saved searches, comm
 ```bash
 youtrack auth status
 youtrack issue search 'project: APP #Unresolved' --limit 20 --json
-youtrack issue view TT-123 --json
+youtrack issue open TT-123 --print-url --json
+youtrack issue search 'project: APP #Unresolved' open --print-url --json
+youtrack saved-search open 'Assigned to me' --print-url --json
 youtrack issue create APP --summary 'Clear reproduction steps' --description-file ./description.md --json
 youtrack saved-search view 'Assigned to me' --limit 20 --json
 youtrack issue comment list TT-123 --limit 20 --json
@@ -40,7 +42,10 @@ Do not guess command flags, custom-field names, enum/state/version values, or us
 - Do not invent sprint syntax. YouTrack selects the board's current/default sprint.
 - A mixed normal-field and Board edit validates first but is not transactionally atomic if Board command execution later fails.
 - Quote the single `issue search` query, use YouTrack's server-side search rather than local filtering, and preserve explicit server sorting.
-- Prefer a bounded `--limit` for discovery; reserve `--all` for necessary full scans.
+- `issue search 'open'` is a REST search; add the exact lowercase suffix (`issue search 'open' open`) to hand it to the browser. Browser mode omits `--limit`, `--offset`, and `--all`.
+- For unattended browser handoff, prefer `--print-url --json`; `--json` alone still dispatches the OS opener.
+- Use `issue open` for a canonical issue route and `saved-search open` for a saved search's current query snapshot. Never put a token in a URL.
+- Direct browser search constructs its URL without credentials or HTTP. Issue and saved-search browser routes authenticate for metadata only; OS dispatch success is distinct from browser login, navigation, and authorization.
 - Use `saved-search view` with an existing visible saved search instead of recreating its server-side filter locally.
 - Saved searches are view-only: do not use structured create, update, delete, or sharing operations.
 - List comments before choosing a comment ID; use `--file` for substantial replacement text.
@@ -58,12 +63,12 @@ Do not guess command flags, custom-field names, enum/state/version values, or us
 | Area | Commands |
 | --- | --- |
 | Auth | `auth login`, `auth logout`, `auth status` |
-| Issue | `issue search`, `issue view`, `issue create`, `issue edit`, `issue move` |
+| Issue | `issue search`, `issue view`, `issue open`, `issue create`, `issue edit`, `issue move` |
 | Comments | `issue comment list/add/edit/remove` |
 | Issue time | `issue time types/list/view/add/edit/remove` |
 | Issue links | `issue link types/list/add/remove` |
 | Fields | `issue field list/get/set/clear` |
-| Saved searches | `saved-search view` |
+| Saved searches | `saved-search view`, `saved-search open` |
 | API | `api <endpoint>` |
 | Config | `config list/get/set` |
 

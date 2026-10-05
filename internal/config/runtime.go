@@ -3,12 +3,23 @@ package config
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/UsingCoding/youtrack-cli/internal/app"
 )
 
 type CredentialReader interface {
 	Get(profile string) (string, error)
+}
+
+type ServiceInput struct {
+	Profile string
+	URL     string
+}
+
+type Service struct {
+	Profile string
+	URL     string
 }
 
 type RuntimeInput struct {
@@ -23,13 +34,40 @@ type Runtime struct {
 	Token   string
 }
 
-func Resolve(cfg Config, creds CredentialReader, in RuntimeInput) (Runtime, error) {
+func ResolveService(cfg Config, in ServiceInput) (Service, error) {
 	profile := in.Profile
 	if profile == "" {
 		profile = os.Getenv("YOUTRACK_PROFILE")
 	}
 	if profile == "" {
 		profile = cfg.Current
+	}
+
+	explicitURL := in.URL
+	if explicitURL == "" {
+		explicitURL = os.Getenv("YOUTRACK_URL")
+	}
+	if explicitURL != "" {
+		return Service{Profile: profile, URL: explicitURL}, nil
+	}
+
+	if profile == "" {
+		return Service{}, app.Authf("no YouTrack profile is selected; run 'youtrack auth login'")
+	}
+	p, ok := cfg.Profiles[profile]
+	if !ok {
+		return Service{}, app.Authf("YouTrack profile %q does not exist", profile)
+	}
+	if strings.TrimSpace(p.URL) == "" {
+		return Service{}, app.Authf("YouTrack profile %q has no URL", profile)
+	}
+	return Service{Profile: profile, URL: p.URL}, nil
+}
+
+func Resolve(cfg Config, creds CredentialReader, in RuntimeInput) (Runtime, error) {
+	service, err := ResolveService(cfg, ServiceInput{Profile: in.Profile, URL: in.URL})
+	if err != nil {
+		return Runtime{}, err
 	}
 
 	explicitURL := in.URL
@@ -45,28 +83,18 @@ func Resolve(cfg Config, creds CredentialReader, in RuntimeInput) (Runtime, erro
 		if explicitToken == "" {
 			return Runtime{}, app.Authf("YOUTRACK_URL/--url requires YOUTRACK_TOKEN/--token; stored credentials are not reused for an overridden server")
 		}
-		return Runtime{Profile: profile, URL: explicitURL, Token: explicitToken}, nil
+		return Runtime{Profile: service.Profile, URL: service.URL, Token: explicitToken}, nil
 	}
 
-	if profile == "" {
-		return Runtime{}, app.Authf("no YouTrack profile is selected; run 'youtrack auth login'")
-	}
-	p, ok := cfg.Profiles[profile]
-	if !ok {
-		return Runtime{}, app.Authf("YouTrack profile %q does not exist", profile)
-	}
-	if p.URL == "" {
-		return Runtime{}, app.Authf("YouTrack profile %q has no URL", profile)
-	}
 	if explicitToken != "" {
-		return Runtime{Profile: profile, URL: p.URL, Token: explicitToken}, nil
+		return Runtime{Profile: service.Profile, URL: service.URL, Token: explicitToken}, nil
 	}
-	token, err := creds.Get(profile)
+	token, err := creds.Get(service.Profile)
 	if err != nil {
-		return Runtime{}, fmt.Errorf("read credential for profile %q: %w", profile, err)
+		return Runtime{}, fmt.Errorf("read credential for profile %q: %w", service.Profile, err)
 	}
 	if token == "" {
-		return Runtime{}, app.Authf("no token is stored for profile %q; run 'youtrack auth login'", profile)
+		return Runtime{}, app.Authf("no token is stored for profile %q; run 'youtrack auth login'", service.Profile)
 	}
-	return Runtime{Profile: profile, URL: p.URL, Token: token}, nil
+	return Runtime{Profile: service.Profile, URL: service.URL, Token: token}, nil
 }

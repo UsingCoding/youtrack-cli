@@ -6,7 +6,7 @@ MVP1 focuses on safe issue inspection and mutation: custom fields, tags, summary
 
 ## Status
 
-MVP1 implementation plus MVP2 issue search, read-only saved-search view, comment management, issue creation, and release verification. MVP3 Epics 1–2 spent-time and issue-relationship management are delivered. The implementation specification is split across [`spec/mvp1`](spec/mvp1/00-overview.md), [`spec/mvp2`](spec/mvp2/00-overview.md), and [`spec/mvp3`](spec/mvp3/00-overview.md).
+MVP1 implementation plus MVP2 issue search, read-only saved-search view, comment management, issue creation, and release verification. MVP3 Epics 1–3 spent-time, issue-relationship management, and safe browser handoff are delivered. The implementation specification is split across [`spec/mvp1`](spec/mvp1/00-overview.md), [`spec/mvp2`](spec/mvp2/00-overview.md), and [`spec/mvp3`](spec/mvp3/00-overview.md).
 
 ## Install for development
 
@@ -53,7 +53,7 @@ youtrack issue field list TT-123
 youtrack issue field get TT-123 Priority --plain
 ```
 
-## Issue search
+## Issue search and browser handoff
 
 ```bash
 youtrack issue search 'project: APP'
@@ -61,7 +61,17 @@ youtrack issue search 'project: APP #Unresolved sort by: updated desc' --limit 2
 youtrack issue search 'project: APP' --offset 100 --limit 50
 youtrack issue search 'project: APP' --all
 youtrack issue search 'project: APP #Unresolved' --json
+
+youtrack issue open APP-123 --print-url --plain
+youtrack issue search 'project: APP #Unresolved' open --print-url --plain
+youtrack saved-search open 'Assigned to me' --print-url --plain
 ```
+
+The browser-search grammar is exactly `issue search <query> open`. `issue search 'open'` remains an ordinary REST search for the literal query; `issue search 'open' open` opens that query in the browser. Browser-search mode does not accept `--limit`, `--offset`, or `--all`.
+
+`--print-url` is the headless workflow: it prints the canonical context-safe URL and does not dispatch a browser. With no `--print-url`, `--json` and `--plain` select output formatting but still dispatch the platform browser opener. Direct `issue search <query> open` builds the URL without a token, credential read, or HTTP request. `issue open` and `saved-search open` authenticate only to resolve canonical issue or saved-query metadata; browser login and page authorization remain separate.
+
+URLs preserve a configured context path such as `/youtrack`, encode query and issue values once, and never contain tokens. A successful OS dispatch is not evidence that the browser navigated or authenticated; an opener failure is not a mutation and must not be retried as one.
 
 YouTrack performs filtering and sorting; the CLI preserves the quoted query and any explicit sort clause. Prefer bounded discovery with `--limit`; reserve `--all` for a genuinely complete collection.
 
@@ -73,7 +83,7 @@ youtrack saved-search view 51-33 --limit 20
 youtrack saved-search view 'Release blockers' --all
 ```
 
-`saved-search view` runs the visible server-side saved query. Result flags page its matching issues; the command is view-only.
+`saved-search view` runs the visible server-side saved query. Result flags page its matching issues; the command is view-only. `saved-search open` instead opens the saved search's current query snapshot without fetching matching issues.
 
 ## Comments
 

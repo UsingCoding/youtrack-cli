@@ -7,11 +7,12 @@ import (
 	appcli "github.com/urfave/cli/v3"
 
 	"github.com/UsingCoding/youtrack-cli/internal/app"
+	"github.com/UsingCoding/youtrack-cli/internal/browser"
 )
 
 func savedSearchCommand(deps Dependencies) *appcli.Command {
 	return &appcli.Command{Name: "saved-search", Usage: "view saved searches", Commands: []*appcli.Command{
-		savedSearchViewCommand(deps),
+		savedSearchViewCommand(deps), savedSearchOpenCommand(deps),
 	}}
 }
 
@@ -39,6 +40,36 @@ func savedSearchViewCommand(deps Dependencies) *appcli.Command {
 				return err
 			}
 			return rt.renderer.SavedSearch(view.Search, view.Issues)
+		},
+	}
+}
+
+func savedSearchOpenCommand(deps Dependencies) *appcli.Command {
+	return &appcli.Command{
+		Name: "open", Usage: "open a saved search in a browser", ArgsUsage: "<saved-search>", Flags: []appcli.Flag{
+			&appcli.BoolFlag{Name: "print-url", Usage: "print the destination without opening a browser"},
+		},
+		Action: func(ctx context.Context, cmd *appcli.Command) error {
+			args := cmd.Args().Slice()
+			if err := requireArgs(args, 1, 1, "youtrack saved-search open <saved-search>"); err != nil {
+				return err
+			}
+			if strings.TrimSpace(args[0]) == "" {
+				return app.Validationf("saved search reference must not be blank")
+			}
+			rt, err := buildRuntime(deps, cmd)
+			if err != nil {
+				return err
+			}
+			search, err := rt.service.ResolveSavedSearch(ctx, args[0])
+			if err != nil {
+				return err
+			}
+			url, err := browser.BuildSearchURL(rt.url, search.Query)
+			if err != nil {
+				return err
+			}
+			return openURL(deps, rt.renderer, url, cmd.Bool("print-url"))
 		},
 	}
 }

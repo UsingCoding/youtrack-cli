@@ -69,6 +69,8 @@ Reuse configuration selection logic rather than cloning its precedence in browse
 
 The opener invokes the platform mechanism directly with argument arrays. It must not use a shell or interpolate query text into a command string. It reports dispatch success, not browser navigation, HTTP authorization, or successful page rendering.
 
+Every future subcommand group that manages a navigable YouTrack entity MUST deliver a safe `<entity> open` operation with that entity feature. It MUST resolve a canonical web route through this URL/opening boundary. This is a design rule only: Epic 3 adds no open commands beyond issue and saved-search, and the embedded skill must not advertise unavailable commands.
+
 ## Pagination and caching
 
 Reuse MVP2 `--limit 50`, `--offset 0`, `--all`, and explicit-limit conflict rules. Resolution caches live for one invocation only. Advance collection offsets by actual returned count; stop only at caller limit or an empty page. No persistent directory/link/type cache is introduced.

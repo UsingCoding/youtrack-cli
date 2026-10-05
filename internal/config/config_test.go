@@ -194,3 +194,55 @@ func TestDefaultPathFallsBackToHomeConfigurationDirectory(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, path, store.Path)
 }
+
+type countingCreds struct {
+	calls int
+	err   error
+}
+
+func (c *countingCreds) Get(string) (string, error) {
+	c.calls++
+	return "", c.err
+}
+
+func TestResolveServicePrecedenceDoesNotReadCredentials(t *testing.T) {
+	t.Setenv("YOUTRACK_PROFILE", "")
+	t.Setenv("YOUTRACK_URL", "")
+	cfg := Config{Current: "current", Profiles: map[string]Profile{
+		"current": {URL: "https://current.example"},
+		"chosen":  {URL: "https://chosen.example"},
+	}}
+	creds := &countingCreds{err: os.ErrPermission}
+
+	for _, tc := range []struct {
+		name    string
+		profile string
+		url     string
+		envURL  string
+		want    Service
+	}{
+		{name: "flag URL", profile: "chosen", url: "https://flag.example", want: Service{Profile: "chosen", URL: "https://flag.example"}},
+		{name: "environment URL", profile: "chosen", envURL: "https://environment.example", want: Service{Profile: "chosen", URL: "https://environment.example"}},
+		{name: "selected profile", profile: "chosen", want: Service{Profile: "chosen", URL: "https://chosen.example"}},
+		{name: "current profile", want: Service{Profile: "current", URL: "https://current.example"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Setenv("YOUTRACK_URL", tc.envURL)
+			got, err := ResolveService(cfg, ServiceInput{Profile: tc.profile, URL: tc.url})
+			require.NoError(t, err)
+			assert.Equal(t, tc.want, got)
+			assert.Zero(t, creds.calls)
+		})
+	}
+}
+
+func TestResolveServiceValidatesSelectedProfile(t *testing.T) {
+	t.Setenv("YOUTRACK_PROFILE", "")
+	t.Setenv("YOUTRACK_URL", "")
+	cfg := Config{Profiles: map[string]Profile{"blank": {URL: " "}}}
+	for _, in := range []ServiceInput{{}, {Profile: "missing"}, {Profile: "blank"}} {
+		_, err := ResolveService(cfg, in)
+		require.Error(t, err)
+		assert.Equal(t, app.ErrorAuth, app.KindOf(err))
+	}
+}

@@ -21,24 +21,36 @@ func (s *Service) ViewSavedSearch(ctx context.Context, ref string, request PageR
 		return SavedSearchView{}, err
 	}
 
-	search, err := s.savedSearches.GetSavedSearch(ctx, ref)
+	search, err := s.ResolveSavedSearch(ctx, ref)
 	if err != nil {
-		if KindOf(err) != ErrorNotFound {
-			return SavedSearchView{}, err
-		}
-		search, err = s.resolveSavedSearch(ctx, ref)
-		if err != nil {
-			return SavedSearchView{}, err
-		}
-	}
-	if strings.TrimSpace(search.Query) == "" {
-		return SavedSearchView{}, Validationf("saved search %q has a blank query", search.Name)
+		return SavedSearchView{}, err
 	}
 	issues, err := s.SearchIssues(ctx, search.Query, request)
 	if err != nil {
 		return SavedSearchView{}, err
 	}
 	return SavedSearchView{Search: search, Issues: issues}, nil
+}
+
+// ResolveSavedSearch resolves saved-search metadata without executing its query.
+func (s *Service) ResolveSavedSearch(ctx context.Context, ref string) (domain.SavedSearch, error) {
+	if strings.TrimSpace(ref) == "" {
+		return domain.SavedSearch{}, Validationf("saved search reference must not be blank")
+	}
+	search, err := s.savedSearches.GetSavedSearch(ctx, ref)
+	if err != nil {
+		if KindOf(err) != ErrorNotFound {
+			return domain.SavedSearch{}, err
+		}
+		search, err = s.resolveSavedSearch(ctx, ref)
+		if err != nil {
+			return domain.SavedSearch{}, err
+		}
+	}
+	if strings.TrimSpace(search.Query) == "" {
+		return domain.SavedSearch{}, Validationf("saved search %q has a blank query", search.Name)
+	}
+	return search, nil
 }
 
 func (s *Service) resolveSavedSearch(ctx context.Context, ref string) (domain.SavedSearch, error) {

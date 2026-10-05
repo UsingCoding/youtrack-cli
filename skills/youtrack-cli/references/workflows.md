@@ -20,6 +20,16 @@ youtrack issue field list APP-123 --json
 
 Use an existing visible saved search when its server-side filter captures the intended work. Inspect server-ordered results; do not copy or recreate the filter locally.
 
+## Browser handoff
+
+```bash
+youtrack issue open APP-123 --print-url --json
+youtrack issue search 'project: APP #Unresolved' open --print-url --json
+youtrack saved-search open 'Release blockers' --print-url --json
+```
+
+Use `--print-url --json` in unattended work. `issue search 'open'` is an ordinary search; only `issue search 'open' open` selects browser mode, which omits pagination. Direct browser search needs only the selected service URL and performs no credential read or HTTP request. Issue and saved-search opening authenticate only for canonical metadata. Never put tokens in URLs; OS dispatch acceptance does not prove browser login, navigation, or authorization.
+
 ## Create then inspect
 
 ```bash
