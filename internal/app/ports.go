@@ -146,6 +146,17 @@ type UserDirectoryStore interface {
 	ListUsers(context.Context, Page) ([]domain.User, error)
 }
 
+type IssueIdentityStore interface {
+	GetIssueIdentity(context.Context, domain.IssueRef) (domain.IssueIdentity, error)
+}
+
+type LinkStore interface {
+	ListLinkTypes(context.Context, Page) ([]domain.LinkType, error)
+	ListLinkedIssues(context.Context, domain.IssueRef, domain.LinkRelation, Page) ([]domain.IssueSummary, error)
+	AddIssueLink(context.Context, domain.IssueRef, domain.LinkRelation, domain.IssueRef) error
+	RemoveIssueLink(context.Context, domain.IssueRef, domain.LinkRelation, domain.IssueRef) error
+}
+
 type RawResponse struct {
 	StatusCode int
 	Header     http.Header

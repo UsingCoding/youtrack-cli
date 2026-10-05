@@ -2,7 +2,7 @@
 
 ## Goal
 
-MVP3 adds spent-time management, issue relationships, and browser handoff. This is a specification for future implementation, not a claim that these commands already exist.
+MVP3 adds spent-time management, issue relationships, and browser handoff. Epics 1 and 2 are delivered; browser handoff remains specified for a future Epic 3 implementation.
 
 ## Baseline
 

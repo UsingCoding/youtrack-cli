@@ -17,6 +17,8 @@ func TestSkillCommandsUseProjectScope(t *testing.T) {
 	project := t.TempDir()
 	require.NoError(t, os.Chdir(project))
 	t.Cleanup(func() { require.NoError(t, os.Chdir(cwd)) })
+	project, err = os.Getwd()
+	require.NoError(t, err)
 	out := &bytes.Buffer{}
 	root := NewRoot(Dependencies{Config: cliConfigFake{}, Credentials: cliCredentialsFake{}, Out: out, Err: &bytes.Buffer{}, Version: "test"})
 	require.NoError(t, root.Run(context.Background(), []string{"youtrack", "skill", "install", "--project", "--target", "agents"}))

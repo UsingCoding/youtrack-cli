@@ -32,6 +32,15 @@ func (c *Client) GetIssue(ctx context.Context, ref domain.IssueRef) (domain.Issu
 	return issue, nil
 }
 
+func (c *Client) GetIssueIdentity(ctx context.Context, ref domain.IssueRef) (domain.IssueIdentity, error) {
+	var data dto.IssueIdentity
+	q := url.Values{"fields": []string{issueIdentityFields}}
+	if err := c.doJSON(ctx, http.MethodGet, "/api/issues/"+string(ref), q, nil, &data); err != nil {
+		return domain.IssueIdentity{}, err
+	}
+	return domain.IssueIdentity{ID: data.ID, IDReadable: data.IDReadable}, nil
+}
+
 func (c *Client) UpdateIssue(ctx context.Context, ref domain.IssueRef, patch app.IssuePatch) error {
 	payload := map[string]any{}
 	if patch.Summary != nil {

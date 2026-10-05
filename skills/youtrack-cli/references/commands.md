@@ -13,6 +13,11 @@ youtrack issue time view <issue> <work-item-id>
 youtrack issue time add <issue> --duration <period> --date <YYYY-MM-DD> [--text <text> | --file <path>] [--type <type>] [--author <user>]
 youtrack issue time edit <issue> <work-item-id> [--duration <period>] [--date <YYYY-MM-DD>] [--text <text> | --file <path>] [--type <type> | --clear-type] [--author <user>]
 youtrack issue time remove <issue> <work-item-id> --yes
+youtrack issue link types [--limit <n>] [--offset <n>] [--all]
+youtrack issue link list <issue> --type <reference> [--direction outward|inward] [--limit <n>] [--offset <n>] [--all]
+youtrack issue link add <issue> <target-issue> --type <reference> [--direction outward|inward]
+youtrack issue link remove <issue> <target-issue> --type <reference> [--direction outward|inward]
+
 
 
 
@@ -58,6 +63,8 @@ Use `--json` for structured result consumption. Global flags work from nested co
 `issue comment list` uses the same pagination rules as `issue search`: default limit 50, non-negative offset, positive explicit limit, and no explicit `--limit` with `--all`. It includes visible soft-removed comments. `issue comment add` and `issue comment edit` require exactly one source selected with `--text` or `--file`; both preserve raw supplied bytes, and blank/whitespace-only text is rejected. Edit sends a text-only POST to the selected comment and does not restore a removed comment. Prefer `--file` for substantial multiline content. `issue comment remove` performs reversible soft removal only. Restoration, permanent deletion, attachments, visibility, reactions, and pinning are unsupported. Use `--json` for stable comment objects, `--plain` for IDs (and no bytes on successful removal), or human output for readable blocks.
 
 `issue time types` discovers project-scoped work-item types and `issue time list` uses the ordinary pagination defaults: offset 0, limit 50, positive explicit `--limit`, non-negative `--offset`, and no explicit limit with `--all`. `add` requires an explicit `YYYY-MM-DD` date and a positive integer `h`/`m` duration such as `45m`, `2h`, or `1h30m`. `--text` and `--file` are mutually exclusive and preserve exact bytes, including empty text. `--author` resolves a user ID/login or `@me`; the creator is server-managed. `edit` replaces only supplied values, preserves omitted values, and uses `--clear-type` to send an explicit type clear. Work-item IDs are database IDs. `remove --yes` permanently deletes after an item read; it emits no plain bytes, while JSON reports `{\"entityId\":...,\"removed\":true}`. Do not blindly retry a failed or uncertain mutation.
+
+`issue link types` discovers server-configured relationship types. `list` uses the ordinary pagination rules: offset 0, limit 50, positive explicit limit, non-negative offset, and no explicit limit with `--all`. `--type` is required for list/add/remove and accepts a type ID, unique type name, or unique configured outward/inward label. A directed type selected by ID/name requires exactly `--direction outward|inward`; a label derives that direction and rejects a conflict. An undirected type rejects a direction. Add-existing and remove-missing are successful no-ops; JSON reports final `present` and `changed`. Add/remove first resolve both issue database IDs and fully scan the selected edge collection, then perform at most one write. Removal deletes only the edge; adding a subtask parent does not implicitly detach a prior parent or write a reciprocal edge.
 
 `issue create` accepts exactly one project and a non-blank `--summary`. `--description` and `--description-file` are mutually exclusive and preserve supplied bytes. Each `--field` is split only on its first `=`, so commas and later equals signs remain literal; repeat a multi-value field to provide its complete value set. The CLI resolves the project, all fields, and all tags before issuing one non-retried issue POST, then renders the returned full issue. `Board`, state fields, attachments, links, comments, and notification inputs are unavailable during creation.
 

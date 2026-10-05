@@ -6,7 +6,7 @@ MVP1 focuses on safe issue inspection and mutation: custom fields, tags, summary
 
 ## Status
 
-MVP1 implementation plus MVP2 issue search, read-only saved-search view, comment management, issue creation, and release verification. MVP3 Epic 1 spent-time management is delivered. The implementation specification is split across [`spec/mvp1`](spec/mvp1/00-overview.md), [`spec/mvp2`](spec/mvp2/00-overview.md), and [`spec/mvp3`](spec/mvp3/00-overview.md).
+MVP1 implementation plus MVP2 issue search, read-only saved-search view, comment management, issue creation, and release verification. MVP3 Epics 1–2 spent-time and issue-relationship management are delivered. The implementation specification is split across [`spec/mvp1`](spec/mvp1/00-overview.md), [`spec/mvp2`](spec/mvp2/00-overview.md), and [`spec/mvp3`](spec/mvp3/00-overview.md).
 
 ## Install for development
 
@@ -113,6 +113,25 @@ youtrack issue time remove TT-123 115-7 --yes
 ```
 
 `types` and `list` accept `[--limit <positive-n>] [--offset <non-negative-n>] [--all]`; defaults are 50/0 and `--all` conflicts with an explicit limit. `types` discovers the selected issue project's types. `view` uses a work-item database ID. `--duration` is a required add value and a replacement edit value; use a positive integer `h`/`m` period such as `45m`, `2h`, or `1h30m`. `--date` is a required add value and a replacement edit value in `YYYY-MM-DD`. `--text` and `--file` are mutually exclusive and preserve exact bytes, including empty text. `--type` resolves a project-scoped type; `--clear-type` explicitly clears it and conflicts with `--type`. `--author` resolves an ID, login, or `@me`; `creator` is server-managed. Add/edit replace a work item value; they never increment a total custom field. `remove --yes` is a mandatory acknowledgement for permanent deletion.
+
+## Issue relationships
+
+```text
+youtrack issue link types [--limit <n>] [--offset <n>] [--all]
+youtrack issue link list <issue> --type <reference> [--direction outward|inward] [--limit <n>] [--offset <n>] [--all]
+youtrack issue link add <issue> <target-issue> --type <reference> [--direction outward|inward]
+youtrack issue link remove <issue> <target-issue> --type <reference> [--direction outward|inward]
+```
+
+```bash
+youtrack issue link types --all --json
+youtrack issue link add APP-CHILD APP-PARENT --type 'subtask of' --json
+youtrack issue link list APP-CHILD --type 'subtask of' --all --json
+youtrack issue link add APP-123 APP-125 --type 'relates to'
+youtrack issue link remove APP-CHILD APP-PARENT --type 'subtask of'
+```
+
+Discover link types before selecting one. `--type` accepts a database ID, unique name, or unique configured relation label; it never assumes English aliases. A directed type selected by ID/name requires `--direction outward|inward`; a label supplies its direction and rejects a conflicting flag. Undirected types reject `--direction`. Type and linked-issue lists page with the normal defaults (offset 0, limit 50; `--all` fully scans). Add-existing and remove-missing are successful no-ops reported by JSON `present`/`changed`. Remove deletes only the selected edge, never an issue. Adding a subtask parent does not implicitly detach an existing parent or reparent an issue.
 
 ## Issue creation
 

@@ -16,3 +16,5 @@ const commentFields = "id,text,author(id,login,fullName),created,updated,deleted
 const workItemFields = "id,date,duration(minutes),text,author(id,login,fullName),creator(id,login,fullName),type(id,name),created,updated"
 const workItemTypeFields = "id,name"
 const timeTrackingSettingsFields = "enabled"
+const linkTypeFields = "id,name,directed,aggregation,sourceToTarget,targetToSource"
+const issueIdentityFields = "id,idReadable"

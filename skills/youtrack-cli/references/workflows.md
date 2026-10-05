@@ -89,3 +89,15 @@ youtrack issue time remove APP-123 115-7 --yes
 ```
 
 Discover types in the issue project, then list to obtain database work-item IDs. Use calendar dates and positive `h`/`m` durations. Inspect returned values after add/edit when server workflows or attribution matter. Removal is permanent. If a mutation request fails or its result is uncertain, do not retry blindly; inspect first because the server may have accepted it.
+
+## Relationship lifecycle
+
+```bash
+youtrack issue link types --all --json
+youtrack issue link add APP-CHILD APP-PARENT --type 'subtask of' --json
+youtrack issue link list APP-CHILD --type 'subtask of' --all --json
+youtrack issue link list APP-PARENT --type 'parent for' --all --json
+youtrack issue link remove APP-CHILD APP-PARENT --type 'subtask of' --json
+```
+
+Discover types before selecting a relation. A unique configured label determines direction; a type ID/name for a directed type instead needs `--direction outward|inward`. Direction is relative to the first issue. Add/remove resolve both identities and scan all selected-relation pages before at most one edge mutation. An existing add or missing remove is a no-op; removal never deletes an issue. Do not expect an add to implicitly detach an old parent or create a reciprocal edge.

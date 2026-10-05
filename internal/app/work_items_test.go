@@ -132,7 +132,7 @@ func (f workItemUserFake) Me(context.Context) (domain.User, error) { return f.me
 
 func workItemService(store *workItemStoreFake, tracking *timeTrackingFake, directory *userDirectoryFake) *Service {
 	issue := workItemIssueFake{issue: domain.Issue{ID: "2-1", Project: domain.Project{ID: "0-1"}}}
-	return NewService(issue, nil, nil, nil, nil, nil, nil, workItemUserFake{me: domain.User{ID: "me", Login: "me"}}, nil, nil, nil, store, tracking, directory)
+	return NewService(issue, nil, nil, nil, nil, nil, nil, workItemUserFake{me: domain.User{ID: "me", Login: "me"}}, nil, nil, nil, store, tracking, directory, nil, nil)
 }
 
 func TestWorkItemListsUseCanonicalIssueAndPublicPaging(t *testing.T) {

@@ -1,7 +1,7 @@
 ---
 name: youtrack-cli
 version: 0.3.0
-description: Use when working with YouTrack issues, visible saved searches, comments, and spent time from a coding agent; drives the `youtrack` CLI for inspection, fields including Board membership, tags, project moves, comment management, issue time management, and raw API access.
+description: Use when working with YouTrack issues, visible saved searches, comments, spent time, and issue relationships from a coding agent; drives the `youtrack` CLI for inspection, fields including Board membership, tags, project moves, comment management, issue time management, relationship management, and raw API access.
 ---
 
 # YouTrack CLI (`youtrack`)
@@ -18,6 +18,8 @@ youtrack issue comment list TT-123 --limit 20 --json
 youtrack issue field list TT-123 --json
 youtrack issue time types TT-123 --all --json
 youtrack issue time list TT-123 --limit 20 --json
+youtrack issue link types --all --json
+youtrack issue link list TT-123 --type 'relates to' --limit 20 --json
 ```
 
 Do not guess command flags, custom-field names, enum/state/version values, or users. Use `youtrack <command> --help`, `issue field list`, and `issue field get` to inspect the current issue before mutating it.
@@ -47,6 +49,9 @@ Do not guess command flags, custom-field names, enum/state/version values, or us
 - Discover project work-item types with `issue time types` before adding or changing time; use explicit `YYYY-MM-DD` dates and positive `h`/`m` durations.
 - Work-item IDs are database IDs. `issue time edit` replaces only supplied values; `--clear-type` explicitly clears a type, and `issue time remove <issue> <id> --yes` permanently deletes an item.
 - Treat a failed or uncertain time mutation as uncertain; inspect before deciding whether to retry.
+- Discover relationship types with `issue link types` before add/remove. Use the discovered type ID/name plus direction, or a unique configured label; do not assume English aliases.
+- A link direction is relative to the first issue. Adding `APP-CHILD APP-PARENT --type 'subtask of'` sends one child-to-parent edge; it never adds a reciprocal edge or implicitly reparents.
+- Treat a failed or uncertain relationship mutation as uncertain; inspect the selected relation before deciding whether to retry.
 
 ## Core commands
 
@@ -56,6 +61,7 @@ Do not guess command flags, custom-field names, enum/state/version values, or us
 | Issue | `issue search`, `issue view`, `issue create`, `issue edit`, `issue move` |
 | Comments | `issue comment list/add/edit/remove` |
 | Issue time | `issue time types/list/view/add/edit/remove` |
+| Issue links | `issue link types/list/add/remove` |
 | Fields | `issue field list/get/set/clear` |
 | Saved searches | `saved-search view` |
 | API | `api <endpoint>` |

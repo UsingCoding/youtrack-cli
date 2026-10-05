@@ -19,6 +19,8 @@ func withProjectDirectory(t *testing.T) string {
 	project := t.TempDir()
 	require.NoError(t, os.Chdir(project))
 	t.Cleanup(func() { require.NoError(t, os.Chdir(cwd)) })
+	project, err = os.Getwd()
+	require.NoError(t, err)
 	return project
 }
 
@@ -36,7 +38,7 @@ func TestTargetsInventory(t *testing.T) {
 func TestProjectSkillStatusInstallAndRemove(t *testing.T) {
 	project := withProjectDirectory(t)
 	preexisting := filepath.Join(project, ".codex", "skills", "youtrack-cli")
-	require.NoError(t, os.MkdirAll(preexisting, 0o755))
+	require.NoError(t, os.MkdirAll(preexisting, 0o750))
 	statuses, err := List(true)
 	require.NoError(t, err)
 	var codex Status
@@ -51,7 +53,7 @@ func TestProjectSkillStatusInstallAndRemove(t *testing.T) {
 	installed, err := Install(true, "codex")
 	require.NoError(t, err)
 	assert.Equal(t, []string{preexisting}, installed)
-	actual, err := os.ReadFile(filepath.Join(preexisting, "SKILL.md"))
+	actual, err := os.ReadFile(filepath.Join(preexisting, "SKILL.md")) // #nosec G304 -- The test reads a path under t.TempDir().
 	require.NoError(t, err)
 	expected, err := youtrackcli.SkillsFS.ReadFile("skills/youtrack-cli/SKILL.md")
 	require.NoError(t, err)

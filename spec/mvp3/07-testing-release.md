@@ -2,8 +2,7 @@
 
 ## Scope of this change
 
-This deliverable is a specification only. Validate local Markdown links, examples, cross-document consistency, and API claims. Do not mark implementation epics complete or claim live API/browser behavior from documentation research.
-
+Epic 1 spent-time and Epic 2 relationship behavior are implemented. Validate their focused contracts, built-CLI smoke scenarios, output compatibility, and documentation. Browser-handoff requirements remain specification-only until Epic 3 is implemented.
 The requirements below apply when implementing MVP3. Keep the existing Testify, handwritten fake, `httptest.Server`, mise, race/build, and coverage conventions. Tests must defend observable contracts and plausible boundary failures, not source text, constructor wiring, or incidental human wording.
 
 ## Spent time

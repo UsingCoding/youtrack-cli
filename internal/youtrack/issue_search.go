@@ -24,16 +24,20 @@ func (c *Client) SearchIssues(ctx context.Context, query string, page app.Page) 
 	}
 	items := make([]domain.IssueSummary, 0, len(data))
 	for _, item := range data {
-		mapped := domain.IssueSummary{
-			ID: item.ID, IDReadable: item.IDReadable, Summary: item.Summary,
-			Project: domain.Project{ID: item.Project.ID, Name: item.Project.Name, ShortName: item.Project.ShortName},
-			Created: time.UnixMilli(item.Created), Updated: time.UnixMilli(item.Updated),
-		}
-		if item.Resolved != nil {
-			resolved := time.UnixMilli(*item.Resolved)
-			mapped.Resolved = &resolved
-		}
-		items = append(items, mapped)
+		items = append(items, mapIssueSummary(item))
 	}
 	return items, nil
+}
+
+func mapIssueSummary(item dto.IssueSummary) domain.IssueSummary {
+	mapped := domain.IssueSummary{
+		ID: item.ID, IDReadable: item.IDReadable, Summary: item.Summary,
+		Project: domain.Project{ID: item.Project.ID, Name: item.Project.Name, ShortName: item.Project.ShortName},
+		Created: time.UnixMilli(item.Created), Updated: time.UnixMilli(item.Updated),
+	}
+	if item.Resolved != nil {
+		resolved := time.UnixMilli(*item.Resolved)
+		mapped.Resolved = &resolved
+	}
+	return mapped
 }
