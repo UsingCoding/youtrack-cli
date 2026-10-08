@@ -2,7 +2,7 @@
 
 ## Status and execution model
 
-Epics 1 and 2 are implementation reports as well as plans: their end-to-end slices are delivered. Epic 3 remains pending. Each epic spans application/domain, adapter, CLI, output, focused verification, README, and embedded skill; reuse [the source contracts](00-overview.md#specification-map).
+All three epics are implementation reports: their end-to-end slices are implemented. Epic 3 authorized multi-platform live-browser acceptance remains pending; the separate Release checklist remains open. Each epic spans application/domain, adapter, CLI, output, focused verification, README, and embedded skill; reuse [the source contracts](00-overview.md#specification-map).
 Default merge order follows the three epics below: spent time, issue relationships, then browser handoff.
 
 Create each implementation worktree from the integrated earlier changes. Shared composition files (`internal/app/ports.go`, service constructors, `internal/cli/runtime.go`, issue/root commands, output, and skill references) require one integration owner and sequential integration. Independent research can run alongside feature work; do not have two slices independently redesign the same runtime.
@@ -13,7 +13,7 @@ Each merged implementation slice must contain reachable behavior, not dormant po
 
 - [x] Epic 1 — Issue spent time CRUD and type discovery
 - [x] Epic 2 — Directed and undirected issue relationships
-- [ ] Epic 3 — Browser handoff and URL-only workflows
+- [ ] Epic 3 — Browser handoff and URL-only workflows (implementation complete; live acceptance pending)
 - [ ] Release — Cross-feature compatibility and documentation verification
 
 ## Epic 1 — Issue spent time CRUD

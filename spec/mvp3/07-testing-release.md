@@ -2,7 +2,7 @@
 
 ## Scope of this change
 
-Epic 1 spent-time and Epic 2 relationship behavior are implemented. Validate their focused contracts, built-CLI smoke scenarios, output compatibility, and documentation. Browser-handoff requirements remain specification-only until Epic 3 is implemented.
+Epic 1 spent-time and Epic 2 relationship behavior are implemented. Epic 3 browser-handoff implementation is complete; its authorized live-route and release-platform acceptance remains pending. Validate each implemented epic's focused contracts, built-CLI smoke scenarios, output compatibility, and documentation.
 The requirements below apply when implementing MVP3. Keep the existing Testify, handwritten fake, `httptest.Server`, mise, race/build, and coverage conventions. Tests must defend observable contracts and plausible boundary failures, not source text, constructor wiring, or incidental human wording.
 
 ## Spent time
@@ -65,6 +65,12 @@ Proof must exercise the actual CLI and platform integration, not only a fake ope
 2. Use a disposable local HTTP page or authorized test server to observe a real browser handoff on macOS, Linux, and Windows release targets. Platform launch paths must use arguments/native APIs without shell interpolation (including Windows, not `cmd /c start` with user input).
 3. Verify issue and query web routes in an actual supported YouTrack browser surface, including an opaque query with reserved characters and a self-hosted context path where available.
 4. Verify a missing/unavailable opener produces the documented failure and URL-only guidance. OS dispatch does not prove page authentication; record that distinction.
+
+## Epic 3 acceptance evidence
+
+- 2026-10-08 local macOS arm64 verification: `go test ./internal/browser ./internal/cli ./internal/output ./integration` passed.
+- 2026-10-08 local macOS arm64 verification: `mise run build` produced a fresh `bin/youtrack`; `./bin/youtrack issue search 'project: APP #Open&+%{}"✓' open --url https://example.test/youtrack --print-url --plain` printed exactly `https://example.test/youtrack/issues?q=project%3A+APP+%23Open%26%2B%25%7B%7D%22%E2%9C%93` followed by one newline.
+- This run had no authorized YouTrack target and no Linux or Windows release environment. Live issue/saved-search metadata resolution, browser-route observation, and native dispatch on every release OS remain pending; no release completion is claimed.
 
 ## Cross-feature output and compatibility
 
