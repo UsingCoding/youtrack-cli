@@ -40,7 +40,7 @@ func (f *savedSearchStoreFake) ListSavedSearches(_ context.Context, page Page) (
 }
 
 func savedSearchService(saved *savedSearchStoreFake, issues *searchStoreFake) *Service {
-	return NewService(nil, nil, issues, saved, nil, nil, nil, nil, nil, nil, nil)
+	return NewService(nil, nil, issues, saved, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 }
 
 func TestViewSavedSearchUsesDirectLookupAndStoredQuery(t *testing.T) {
@@ -160,4 +160,64 @@ func TestViewSavedSearchPropagatesDirectErrorAndRejectsBlankQuery(t *testing.T) 
 			assert.Empty(t, issues.pages)
 		})
 	}
+}
+
+func TestResolveSavedSearchReturnsMetadataWithoutIssueSearch(t *testing.T) {
+	t.Run("direct ID", func(t *testing.T) {
+		saved := &savedSearchStoreFake{direct: domain.SavedSearch{ID: "51-33", Name: "Mine", Query: "project: APP"}}
+		issues := &searchStoreFake{}
+
+		got, err := savedSearchService(saved, issues).ResolveSavedSearch(context.Background(), "51-33")
+
+		require.NoError(t, err)
+		assert.Equal(t, saved.direct, got)
+		assert.Equal(t, []string{"51-33"}, saved.refs)
+		assert.Empty(t, saved.pages)
+		assert.Empty(t, issues.queries)
+		assert.Empty(t, issues.pages)
+	})
+	t.Run("name found on a later page", func(t *testing.T) {
+		saved := &savedSearchStoreFake{
+			directErr: NotFoundf("missing"),
+			list: []savedSearchScript{
+				{items: []domain.SavedSearch{{ID: "other", Name: "Other", Query: "project: OTHER"}}},
+				{items: []domain.SavedSearch{{ID: "51-33", Name: "Mine", Query: "project: APP"}}},
+				{items: []domain.SavedSearch{}},
+			},
+		}
+		issues := &searchStoreFake{}
+
+		got, err := savedSearchService(saved, issues).ResolveSavedSearch(context.Background(), "Mine")
+
+		require.NoError(t, err)
+		assert.Equal(t, "51-33", got.ID)
+		assert.Equal(t, []Page{{Offset: 0, Limit: 50}, {Offset: 1, Limit: 50}, {Offset: 2, Limit: 50}}, saved.pages)
+		assert.Empty(t, issues.queries)
+		assert.Empty(t, issues.pages)
+	})
+}
+
+func TestResolveSavedSearchRejectsBlankReferencesAndQueries(t *testing.T) {
+	t.Run("blank reference", func(t *testing.T) {
+		saved := &savedSearchStoreFake{}
+		issues := &searchStoreFake{}
+
+		_, err := savedSearchService(saved, issues).ResolveSavedSearch(context.Background(), " \t")
+
+		require.Error(t, err)
+		assert.Equal(t, ErrorValidation, KindOf(err))
+		assert.Empty(t, saved.refs)
+		assert.Empty(t, issues.queries)
+	})
+	t.Run("blank stored query", func(t *testing.T) {
+		saved := &savedSearchStoreFake{direct: domain.SavedSearch{Name: "Mine", Query: " "}}
+		issues := &searchStoreFake{}
+
+		_, err := savedSearchService(saved, issues).ResolveSavedSearch(context.Background(), "Mine")
+
+		require.Error(t, err)
+		assert.Equal(t, ErrorValidation, KindOf(err))
+		assert.Empty(t, issues.queries)
+		assert.Empty(t, issues.pages)
+	})
 }

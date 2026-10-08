@@ -1,7 +1,7 @@
 ---
 name: youtrack-cli
-version: 0.2.0
-description: Use when working with YouTrack issues, visible saved searches, and comments from a coding agent; drives the `youtrack` CLI for inspection, fields including Board membership, tags, project moves, comment management, and raw API access.
+version: 0.3.0
+description: Use when working with YouTrack issues, visible saved searches, comments, spent time, and issue relationships from a coding agent; drives the `youtrack` CLI for inspection, fields including Board membership, tags, project moves, comment management, issue time management, relationship management, and raw API access.
 ---
 
 # YouTrack CLI (`youtrack`)
@@ -11,11 +11,17 @@ description: Use when working with YouTrack issues, visible saved searches, and 
 ```bash
 youtrack auth status
 youtrack issue search 'project: APP #Unresolved' --limit 20 --json
-youtrack issue view TT-123 --json
+youtrack issue open TT-123 --print-url --json
+youtrack issue search 'project: APP #Unresolved' open --print-url --json
+youtrack saved-search open 'Assigned to me' --print-url --json
 youtrack issue create APP --summary 'Clear reproduction steps' --description-file ./description.md --json
 youtrack saved-search view 'Assigned to me' --limit 20 --json
 youtrack issue comment list TT-123 --limit 20 --json
 youtrack issue field list TT-123 --json
+youtrack issue time types TT-123 --all --json
+youtrack issue time list TT-123 --limit 20 --json
+youtrack issue link types --all --json
+youtrack issue link list TT-123 --type 'relates to' --limit 20 --json
 ```
 
 Do not guess command flags, custom-field names, enum/state/version values, or users. Use `youtrack <command> --help`, `issue field list`, and `issue field get` to inspect the current issue before mutating it.
@@ -36,22 +42,33 @@ Do not guess command flags, custom-field names, enum/state/version values, or us
 - Do not invent sprint syntax. YouTrack selects the board's current/default sprint.
 - A mixed normal-field and Board edit validates first but is not transactionally atomic if Board command execution later fails.
 - Quote the single `issue search` query, use YouTrack's server-side search rather than local filtering, and preserve explicit server sorting.
-- Prefer a bounded `--limit` for discovery; reserve `--all` for necessary full scans.
+- `issue search 'open'` is a REST search; add the exact lowercase suffix (`issue search 'open' open`) to hand it to the browser. Browser mode omits `--limit`, `--offset`, and `--all`.
+- For unattended browser handoff, prefer `--print-url --json`; `--json` alone still dispatches the OS opener.
+- Use `issue open` for a canonical issue route and `saved-search open` for a saved search's current query snapshot. Never put a token in a URL.
+- Direct browser search constructs its URL without credentials or HTTP. Issue and saved-search browser routes authenticate for metadata only; OS dispatch success is distinct from browser login, navigation, and authorization.
 - Use `saved-search view` with an existing visible saved search instead of recreating its server-side filter locally.
 - Saved searches are view-only: do not use structured create, update, delete, or sharing operations.
 - List comments before choosing a comment ID; use `--file` for substantial replacement text.
 - Do not put permanent tokens in command logs.
 - `issue comment edit` replaces text only; `issue comment remove` is reversible soft removal, not restoration or permanent deletion.
+- Discover project work-item types with `issue time types` before adding or changing time; use explicit `YYYY-MM-DD` dates and positive `h`/`m` durations.
+- Work-item IDs are database IDs. `issue time edit` replaces only supplied values; `--clear-type` explicitly clears a type, and `issue time remove <issue> <id> --yes` permanently deletes an item.
+- Treat a failed or uncertain time mutation as uncertain; inspect before deciding whether to retry.
+- Discover relationship types with `issue link types` before add/remove. Use the discovered type ID/name plus direction, or a unique configured label; do not assume English aliases.
+- A link direction is relative to the first issue. Adding `APP-CHILD APP-PARENT --type 'subtask of'` sends one child-to-parent edge; it never adds a reciprocal edge or implicitly reparents.
+- Treat a failed or uncertain relationship mutation as uncertain; inspect the selected relation before deciding whether to retry.
 
 ## Core commands
 
 | Area | Commands |
 | --- | --- |
 | Auth | `auth login`, `auth logout`, `auth status` |
-| Issue | `issue search`, `issue view`, `issue create`, `issue edit`, `issue move` |
+| Issue | `issue search`, `issue view`, `issue open`, `issue create`, `issue edit`, `issue move` |
 | Comments | `issue comment list/add/edit/remove` |
+| Issue time | `issue time types/list/view/add/edit/remove` |
+| Issue links | `issue link types/list/add/remove` |
 | Fields | `issue field list/get/set/clear` |
-| Saved searches | `saved-search view` |
+| Saved searches | `saved-search view`, `saved-search open` |
 | API | `api <endpoint>` |
 | Config | `config list/get/set` |
 

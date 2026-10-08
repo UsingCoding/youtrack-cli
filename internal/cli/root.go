@@ -5,9 +5,14 @@ import (
 	"time"
 
 	appcli "github.com/urfave/cli/v3"
+
+	"github.com/UsingCoding/youtrack-cli/internal/browser"
 )
 
 func NewRoot(deps Dependencies) *appcli.Command {
+	if deps.BrowserOpener == nil {
+		deps.BrowserOpener = browser.DefaultOpener{}
+	}
 	return &appcli.Command{
 		Name:                  "youtrack",
 		Usage:                 "YouTrack from your terminal — or your coding agent",

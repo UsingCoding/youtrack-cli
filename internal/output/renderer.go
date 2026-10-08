@@ -25,6 +25,11 @@ type Renderer struct {
 	Format Format
 }
 
+type OpenJSON struct {
+	URL    string `json:"url"`
+	Opened bool   `json:"opened"`
+}
+
 func New(out io.Writer, jsonMode, plainMode bool) (*Renderer, error) {
 	if jsonMode && plainMode {
 		return nil, app.Validationf("--json and --plain are mutually exclusive")
@@ -37,6 +42,25 @@ func New(out io.Writer, jsonMode, plainMode bool) (*Renderer, error) {
 		format = FormatPlain
 	}
 	return &Renderer{Out: out, Format: format}, nil
+}
+
+func (r *Renderer) Open(url string, opened bool) error {
+	switch r.Format {
+	case FormatJSON:
+		return r.json(OpenJSON{URL: url, Opened: opened})
+	case FormatPlain:
+		_, err := fmt.Fprintln(r.Out, url)
+		return err
+	default:
+		if _, err := fmt.Fprintf(r.Out, "Destination: %s\n", url); err != nil {
+			return err
+		}
+		if opened {
+			_, err := fmt.Fprintln(r.Out, "Browser dispatch accepted.")
+			return err
+		}
+		return nil
+	}
 }
 
 func (r *Renderer) Issue(issue domain.Issue) error {

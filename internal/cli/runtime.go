@@ -19,6 +19,11 @@ type runtime struct {
 	url      string
 }
 
+type urlRuntime struct {
+	renderer *output.Renderer
+	url      string
+}
+
 func buildRuntime(deps Dependencies, cmd *appcli.Command) (*runtime, error) {
 	cfg, err := deps.Config.Load()
 	if err != nil {
@@ -47,7 +52,26 @@ func buildRuntime(deps Dependencies, cmd *appcli.Command) (*runtime, error) {
 	}
 	return &runtime{
 		client:   client,
-		service:  app.NewService(client, client, client, client, client, client, client, client, client, client, client),
+		service:  app.NewService(client, client, client, client, client, client, client, client, client, client, client, client, client, client, client, client),
 		renderer: renderer, profile: resolved.Profile, url: resolved.URL,
 	}, nil
+}
+
+func buildURLRuntime(deps Dependencies, cmd *appcli.Command) (*urlRuntime, error) {
+	cfg, err := deps.Config.Load()
+	if err != nil {
+		return nil, err
+	}
+	service, err := config.ResolveService(cfg, config.ServiceInput{
+		Profile: globalString(cmd, "profile"),
+		URL:     globalString(cmd, "url"),
+	})
+	if err != nil {
+		return nil, err
+	}
+	renderer, err := output.New(deps.Out, globalBool(cmd, "json"), globalBool(cmd, "plain"))
+	if err != nil {
+		return nil, err
+	}
+	return &urlRuntime{renderer: renderer, url: service.URL}, nil
 }

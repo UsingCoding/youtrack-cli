@@ -24,7 +24,7 @@ func TestStoreReadsWritesDeletesAndPersistsSecurely(t *testing.T) {
 	got, err := store.Get("company")
 	require.NoError(t, err)
 	assert.Equal(t, 1, subtle.ConstantTimeCompare([]byte(token), []byte(got)))
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) // #nosec G304 -- The test reads a path under t.TempDir().
 	require.NoError(t, err)
 	assert.Contains(t, string(data), "[profiles.company]")
 	info, err := os.Stat(path)

@@ -20,6 +20,16 @@ youtrack issue field list APP-123 --json
 
 Use an existing visible saved search when its server-side filter captures the intended work. Inspect server-ordered results; do not copy or recreate the filter locally.
 
+## Browser handoff
+
+```bash
+youtrack issue open APP-123 --print-url --json
+youtrack issue search 'project: APP #Unresolved' open --print-url --json
+youtrack saved-search open 'Release blockers' --print-url --json
+```
+
+Use `--print-url --json` in unattended work. `issue search 'open'` is an ordinary search; only `issue search 'open' open` selects browser mode, which omits pagination. Direct browser search needs only the selected service URL and performs no credential read or HTTP request. Issue and saved-search opening authenticate only for canonical metadata. Never put tokens in URLs; OS dispatch acceptance does not prove browser login, navigation, or authorization.
+
 ## Create then inspect
 
 ```bash
@@ -76,3 +86,28 @@ youtrack issue comment list APP-123 --limit 20 --json
 ```
 
 List first to obtain the server comment ID. Use a file for multiline text. Editing replaces text only; it does not restore a removed comment. Re-list after adding, editing, or removing when verification matters; removal is reversible soft removal.
+
+## Work-item lifecycle
+
+```bash
+youtrack issue time types APP-123 --all --json
+youtrack issue time list APP-123 --limit 20 --json
+youtrack issue time add APP-123 --duration 1h30m --date 2026-09-29 --type Development --file ./work-note.md --json
+youtrack issue time view APP-123 115-7 --json
+youtrack issue time edit APP-123 115-7 --duration 2h --text '' --clear-type --author alice --json
+youtrack issue time remove APP-123 115-7 --yes
+```
+
+Discover types in the issue project, then list to obtain database work-item IDs. Use calendar dates and positive `h`/`m` durations. Inspect returned values after add/edit when server workflows or attribution matter. Removal is permanent. If a mutation request fails or its result is uncertain, do not retry blindly; inspect first because the server may have accepted it.
+
+## Relationship lifecycle
+
+```bash
+youtrack issue link types --all --json
+youtrack issue link add APP-CHILD APP-PARENT --type 'subtask of' --json
+youtrack issue link list APP-CHILD --type 'subtask of' --all --json
+youtrack issue link list APP-PARENT --type 'parent for' --all --json
+youtrack issue link remove APP-CHILD APP-PARENT --type 'subtask of' --json
+```
+
+Discover types before selecting a relation. A unique configured label determines direction; a type ID/name for a directed type instead needs `--direction outward|inward`. Direction is relative to the first issue. Add/remove resolve both identities and scan all selected-relation pages before at most one edge mutation. An existing add or missing remove is a no-op; removal never deletes an issue. Do not expect an add to implicitly detach an old parent or create a reciprocal edge.

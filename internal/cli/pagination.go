@@ -8,9 +8,9 @@ import (
 
 func paginationFlags() []appcli.Flag {
 	return []appcli.Flag{
-		&appcli.IntFlag{Name: "limit", Value: app.DefaultPageLimit},
-		&appcli.IntFlag{Name: "offset", Value: 0},
-		&appcli.BoolFlag{Name: "all"},
+		&appcli.IntFlag{Name: "limit", Value: app.DefaultPageLimit, Usage: "maximum number of results to return"},
+		&appcli.IntFlag{Name: "offset", Value: 0, Usage: "number of results to skip before listing"},
+		&appcli.BoolFlag{Name: "all", Usage: "list all available results; conflicts with an explicit --limit"},
 	}
 }
 

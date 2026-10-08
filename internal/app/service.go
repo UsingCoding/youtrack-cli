@@ -33,11 +33,16 @@ type Service struct {
 	groups        GroupStore
 	boards        BoardStore
 	comments      CommentStore
+	workItems     WorkItemStore
+	timeTracking  ProjectTimeTrackingStore
+	userDirectory UserDirectoryStore
+	issueIdentity IssueIdentityStore
+	links         LinkStore
 	resolver      *FieldResolver
 }
 
-func NewService(issues IssueStore, creator IssueCreator, issueSearch IssueSearchStore, savedSearches SavedSearchStore, fields ProjectFieldStore, projects ProjectStore, tags TagStore, users UserStore, groups GroupStore, boards BoardStore, comments CommentStore) *Service {
-	return &Service{issues: issues, creator: creator, issueSearch: issueSearch, savedSearches: savedSearches, fields: fields, projects: projects, tags: tags, users: users, groups: groups, boards: boards, comments: comments, resolver: NewFieldResolver(fields, users, groups)}
+func NewService(issues IssueStore, creator IssueCreator, issueSearch IssueSearchStore, savedSearches SavedSearchStore, fields ProjectFieldStore, projects ProjectStore, tags TagStore, users UserStore, groups GroupStore, boards BoardStore, comments CommentStore, workItems WorkItemStore, timeTracking ProjectTimeTrackingStore, userDirectory UserDirectoryStore, issueIdentity IssueIdentityStore, links LinkStore) *Service {
+	return &Service{issues: issues, creator: creator, issueSearch: issueSearch, savedSearches: savedSearches, fields: fields, projects: projects, tags: tags, users: users, groups: groups, boards: boards, comments: comments, workItems: workItems, timeTracking: timeTracking, userDirectory: userDirectory, issueIdentity: issueIdentity, links: links, resolver: NewFieldResolver(fields, users, groups)}
 }
 
 func (s *Service) GetIssue(ctx context.Context, ref domain.IssueRef) (domain.Issue, error) {

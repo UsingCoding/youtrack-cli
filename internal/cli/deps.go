@@ -4,6 +4,7 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/UsingCoding/youtrack-cli/internal/browser"
 	"github.com/UsingCoding/youtrack-cli/internal/config"
 )
 
@@ -21,13 +22,14 @@ type CredentialStore interface {
 }
 
 type Dependencies struct {
-	Config      ConfigStore
-	Credentials CredentialStore
-	In          io.Reader
-	Out         io.Writer
-	Err         io.Writer
-	HTTPClient  *http.Client
-	Version     string
-	Commit      string
-	BuildDate   string
+	Config        ConfigStore
+	Credentials   CredentialStore
+	BrowserOpener browser.Opener
+	In            io.Reader
+	Out           io.Writer
+	Err           io.Writer
+	HTTPClient    *http.Client
+	Version       string
+	Commit        string
+	BuildDate     string
 }
