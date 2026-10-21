@@ -50,8 +50,8 @@ func apiCommand(deps Dependencies) *appcli.Command {
 				}
 				key = strings.TrimSpace(key)
 				value = strings.TrimSpace(value)
-				if strings.EqualFold(key, "Authorization") {
-					return app.Validationf("Authorization header cannot be overridden")
+				if strings.EqualFold(key, "Authorization") || strings.EqualFold(key, "User-Agent") {
+					return app.Validationf("%s header cannot be overridden", key)
 				}
 				headers.Add(key, value)
 			}

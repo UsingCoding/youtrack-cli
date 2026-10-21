@@ -9,7 +9,7 @@ Every normal request sends:
 ```text
 Authorization: Bearer <token>
 Accept: application/json
-User-Agent: youtrack-cli/<version>
+User-Agent: youtrack-cli/<version> (<commit>; <goos>/<goarch>)
 Content-Type: application/json   # JSON mutations
 ```
 

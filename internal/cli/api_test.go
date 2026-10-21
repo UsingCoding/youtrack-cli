@@ -35,6 +35,7 @@ func TestAPICommandRejectsMalformedAndConflictingRequestsBeforeHTTP(t *testing.T
 	for _, args := range [][]string{
 		{"youtrack", "api", "/api/test", "--header", "invalid"},
 		{"youtrack", "api", "/api/test", "--header", "Authorization: custom"},
+		{"youtrack", "api", "/api/test", "--header", "user-agent: custom"},
 		{"youtrack", "api", "/api/test", "--data", "x", "--data-file", "file"},
 	} {
 		err := issueSearchRoot(&bytes.Buffer{}, server).Run(context.Background(), args)

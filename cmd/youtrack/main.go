@@ -11,8 +11,13 @@ import (
 	cliapp "github.com/UsingCoding/youtrack-cli/internal/cli"
 	"github.com/UsingCoding/youtrack-cli/internal/config"
 	"github.com/UsingCoding/youtrack-cli/internal/credentials"
-	"github.com/UsingCoding/youtrack-cli/internal/version"
 	"github.com/UsingCoding/youtrack-cli/internal/youtrack"
+)
+
+var (
+	Version = "dev"
+	Commit  = "none"
+	Date    = "unknown"
 )
 
 func main() {
@@ -27,7 +32,7 @@ func main() {
 	root := cliapp.NewRoot(cliapp.Dependencies{
 		Config: configStore, Credentials: credentialStore,
 		In: os.Stdin, Out: os.Stdout, Err: os.Stderr,
-		Version: version.Version, Commit: version.Commit, BuildDate: version.Date,
+		Version: Version, Commit: Commit, BuildDate: Date,
 	})
 	if err := root.Run(context.Background(), os.Args); err != nil {
 		fail(err, debugRequested(os.Args))

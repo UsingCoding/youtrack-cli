@@ -18,9 +18,9 @@ builds:
         goarch: arm64
     ldflags:
       - -s -w
-      - -X github.com/UsingCoding/youtrack-cli/internal/version.Version={{.Version}}
-      - -X github.com/UsingCoding/youtrack-cli/internal/version.Commit={{.Commit}}
-      - -X github.com/UsingCoding/youtrack-cli/internal/version.Date={{.Date}}
+      - -X main.Version={{.Version}}
+      - -X main.Commit={{.Commit}}
+      - -X main.Date={{.Date}}
 
 archives:
   - ids: [youtrack]

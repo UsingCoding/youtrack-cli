@@ -68,7 +68,7 @@ func authLogin(ctx context.Context, deps Dependencies, cmd *appcli.Command) erro
 		return app.Validationf("token cannot be empty")
 	}
 
-	client, err := youtrack.NewClient(youtrack.Options{BaseURL: serverURL, Token: token, HTTPClient: deps.HTTPClient, Timeout: 30 * time.Second, UserAgent: "youtrack-cli/" + deps.Version})
+	client, err := youtrack.NewClient(youtrack.Options{BaseURL: serverURL, Token: token, HTTPClient: deps.HTTPClient, Timeout: 30 * time.Second, UserAgent: deps.userAgent()})
 	if err != nil {
 		return err
 	}

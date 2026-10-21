@@ -41,7 +41,7 @@ func buildRuntime(deps Dependencies, cmd *appcli.Command) (*runtime, error) {
 	}
 	client, err := youtrack.NewClient(youtrack.Options{
 		BaseURL: resolved.URL, Token: resolved.Token, HTTPClient: deps.HTTPClient,
-		Timeout: timeout, UserAgent: "youtrack-cli/" + deps.Version,
+		Timeout: timeout, UserAgent: deps.userAgent(),
 	})
 	if err != nil {
 		return nil, err

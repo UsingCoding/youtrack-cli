@@ -35,11 +35,15 @@ run = "go test -coverprofile=coverage.out ./... && go tool cover -func=coverage.
 
 [tasks.build]
 description = "Build the CLI"
-run = "go build -o ./bin/youtrack ./cmd/youtrack"
+run = '''
+go build -ldflags "-X main.Version=$(git describe --tags --always --dirty) -X main.Commit=$(git rev-parse --short HEAD) -X main.Date=$(date -u +%Y-%m-%dT%H:%M:%SZ)" -o ./bin/youtrack ./cmd/youtrack
+'''
 
 [tasks.install]
 description = "Install the CLI into GOPATH/bin"
-run = "go install ./cmd/youtrack"
+run = '''
+go install -ldflags "-X main.Version=$(git describe --tags --always --dirty) -X main.Commit=$(git rev-parse --short HEAD) -X main.Date=$(date -u +%Y-%m-%dT%H:%M:%SZ)" ./cmd/youtrack
+'''
 
 [tasks."release:snapshot"]
 description = "Build a local GoReleaser snapshot"
